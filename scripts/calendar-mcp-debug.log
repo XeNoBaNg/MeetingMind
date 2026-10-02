@@ -1,0 +1,282 @@
+[2026-09-19T08:41:53.537Z] Calendar Mock Server started
+[2026-09-19T08:43:44.241Z] Calendar Mock Server started
+[2026-09-19T08:43:44.244Z] RECV: method=initialize id=739f1e31-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-19T08:43:44.244Z] SEND: {"jsonrpc":"2.0","id":"739f1e31-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-19T08:43:44.284Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-19T08:44:41.184Z] RECV: method=tools/call id=739f1e31-1 params={"name":"check_availability","arguments":{"time":"2:00 PM","date":"Friday"}}
+[2026-09-19T08:44:41.185Z] SEND: {"jsonrpc":"2.0","id":"739f1e31-1","result":{"content":[{"type":"text","text":"{\n  \"isAvailable\": false,\n  \"reason\": \"Conflict: Weekly Team Sync is scheduled at this time.\"\n}"}]}}
+[2026-09-19T08:44:41.907Z] RECV: method=tools/call id=739f1e31-2 params={"name":"check_availability","arguments":{"time":"3:30 PM","date":"Friday"}}
+[2026-09-19T08:44:41.909Z] SEND: {"jsonrpc":"2.0","id":"739f1e31-2","result":{"content":[{"type":"text","text":"{\n  \"isAvailable\": true,\n  \"reason\": \"Time is available.\"\n}"}]}}
+[2026-09-19T08:48:52.918Z] stdin ended, exiting
+[2026-09-19T08:49:08.527Z] Calendar Mock Server started
+[2026-09-19T08:49:08.530Z] RECV: method=initialize id=f5d473b5-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-19T08:49:08.531Z] SEND: {"jsonrpc":"2.0","id":"f5d473b5-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-19T08:49:08.632Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-19T08:50:01.558Z] RECV: method=tools/call id=f5d473b5-1 params={"name":"check_availability","arguments":{"date":"2026-09-23","time":"4:00 PM"}}
+[2026-09-19T08:50:01.559Z] SEND: {"jsonrpc":"2.0","id":"f5d473b5-1","result":{"content":[{"type":"text","text":"{\n  \"isAvailable\": true,\n  \"reason\": \"Time is available.\"\n}"}]}}
+[2026-09-19T08:51:30.632Z] stdin ended, exiting
+[2026-09-19T08:51:42.737Z] Calendar Mock Server started
+[2026-09-19T08:51:42.741Z] RECV: method=initialize id=e49dbae6-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-19T08:51:42.741Z] SEND: {"jsonrpc":"2.0","id":"e49dbae6-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-19T08:51:42.782Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-19T08:52:20.007Z] RECV: method=tools/call id=e49dbae6-1 params={"name":"check_availability","arguments":{"time":"4:00 PM","date":"Friday"}}
+[2026-09-19T08:52:20.007Z] SEND: {"jsonrpc":"2.0","id":"e49dbae6-1","result":{"content":[{"type":"text","text":"{\n  \"isAvailable\": true,\n  \"reason\": \"Time is available.\"\n}"}]}}
+[2026-09-19T08:53:54.531Z] stdin ended, exiting
+[2026-09-19T08:54:07.661Z] Calendar Mock Server started
+[2026-09-19T08:54:07.664Z] RECV: method=initialize id=07e5b480-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-19T08:54:07.664Z] SEND: {"jsonrpc":"2.0","id":"07e5b480-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-19T08:54:07.700Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-19T08:55:02.763Z] RECV: method=tools/call id=07e5b480-1 params={"name":"check_availability","arguments":{"date":"Friday","time":"4:00 PM"}}
+[2026-09-19T08:55:02.765Z] SEND: {"jsonrpc":"2.0","id":"07e5b480-1","result":{"content":[{"type":"text","text":"{\n  \"isAvailable\": true,\n  \"reason\": \"Time is available.\"\n}"}]}}
+[2026-09-19T09:03:31.514Z] stdin ended, exiting
+[2026-09-19T09:03:58.418Z] Calendar Mock Server started
+[2026-09-19T09:03:58.422Z] RECV: method=initialize id=10debad1-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-19T09:03:58.422Z] SEND: {"jsonrpc":"2.0","id":"10debad1-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-19T09:03:58.459Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-19T09:16:14.887Z] Calendar Mock Server started
+[2026-09-19T09:16:14.891Z] RECV: method=initialize id=06d5019e-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-19T09:16:14.891Z] SEND: {"jsonrpc":"2.0","id":"06d5019e-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-19T09:16:14.942Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-19T09:16:27.050Z] Calendar Mock Server started
+[2026-09-19T09:16:27.053Z] RECV: method=initialize id=7f03295e-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-19T09:16:27.053Z] SEND: {"jsonrpc":"2.0","id":"7f03295e-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-19T09:16:27.059Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-19T09:17:18.573Z] Calendar Mock Server started
+[2026-09-19T09:17:18.577Z] RECV: method=initialize id=55a548e4-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-19T09:17:18.577Z] SEND: {"jsonrpc":"2.0","id":"55a548e4-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-19T09:17:18.629Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-19T09:17:55.689Z] Calendar Mock Server started
+[2026-09-19T09:17:55.692Z] RECV: method=initialize id=2432d4e5-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-19T09:17:55.692Z] SEND: {"jsonrpc":"2.0","id":"2432d4e5-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-19T09:17:55.698Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-19T09:19:51.522Z] stdin ended, exiting
+[2026-09-21T09:29:56.195Z] Calendar Mock Server started
+[2026-09-21T09:29:56.199Z] RECV: method=initialize id=486c25b6-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-21T09:29:56.199Z] SEND: {"jsonrpc":"2.0","id":"486c25b6-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-21T09:29:56.243Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-21T11:45:01.321Z] stdin ended, exiting
+[2026-09-23T14:16:50.766Z] Calendar Mock Server started
+[2026-09-23T14:16:50.770Z] RECV: method=initialize id=5e3bf445-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:16:50.771Z] SEND: {"jsonrpc":"2.0","id":"5e3bf445-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:16:50.830Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:17:48.875Z] Calendar Mock Server started
+[2026-09-23T14:17:48.905Z] RECV: method=initialize id=ac1287f7-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:17:48.905Z] SEND: {"jsonrpc":"2.0","id":"ac1287f7-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:17:48.969Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:18:40.338Z] Calendar Mock Server started
+[2026-09-23T14:18:40.345Z] RECV: method=initialize id=8e859fbd-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:18:40.346Z] SEND: {"jsonrpc":"2.0","id":"8e859fbd-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:18:40.402Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:18:49.167Z] stdin ended, exiting
+[2026-09-23T14:19:11.083Z] Calendar Mock Server started
+[2026-09-23T14:19:11.098Z] RECV: method=initialize id=905361f9-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:19:11.098Z] SEND: {"jsonrpc":"2.0","id":"905361f9-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:19:11.157Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:19:25.736Z] Calendar Mock Server started
+[2026-09-23T14:19:25.739Z] RECV: method=initialize id=7b3eefac-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:19:25.740Z] SEND: {"jsonrpc":"2.0","id":"7b3eefac-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:19:25.746Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:19:28.470Z] Calendar Mock Server started
+[2026-09-23T14:19:28.476Z] RECV: method=initialize id=fcd8ed46-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:19:28.476Z] SEND: {"jsonrpc":"2.0","id":"fcd8ed46-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:19:28.483Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:19:30.026Z] stdin ended, exiting
+[2026-09-23T14:21:49.550Z] Calendar Mock Server started
+[2026-09-23T14:21:49.553Z] RECV: method=initialize id=f3f6045d-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:21:49.554Z] SEND: {"jsonrpc":"2.0","id":"f3f6045d-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:21:49.590Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:39:26.718Z] Calendar Mock Server started
+[2026-09-23T14:39:26.721Z] RECV: method=initialize id=61fd0d5f-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:39:26.722Z] SEND: {"jsonrpc":"2.0","id":"61fd0d5f-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:39:26.767Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:39:37.759Z] Calendar Mock Server started
+[2026-09-23T14:39:37.762Z] RECV: method=initialize id=51ec9aff-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:39:37.777Z] SEND: {"jsonrpc":"2.0","id":"51ec9aff-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:39:37.783Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:40:52.423Z] Calendar Mock Server started
+[2026-09-23T14:40:52.429Z] RECV: method=initialize id=74575529-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:40:52.429Z] SEND: {"jsonrpc":"2.0","id":"74575529-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:40:52.523Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:41:22.046Z] Calendar Mock Server started
+[2026-09-23T14:41:22.049Z] RECV: method=initialize id=794f6664-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:41:22.050Z] SEND: {"jsonrpc":"2.0","id":"794f6664-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:41:22.056Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:42:11.796Z] Calendar Mock Server started
+[2026-09-23T14:42:11.800Z] RECV: method=initialize id=3ee6c130-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:42:11.800Z] SEND: {"jsonrpc":"2.0","id":"3ee6c130-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:42:11.846Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:42:41.836Z] Calendar Mock Server started
+[2026-09-23T14:42:41.840Z] RECV: method=initialize id=d0c106e7-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-23T14:42:41.840Z] SEND: {"jsonrpc":"2.0","id":"d0c106e7-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-23T14:42:41.866Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-23T14:48:02.823Z] stdin ended, exiting
+[2026-09-30T18:18:54.607Z] Calendar Mock Server started
+[2026-09-30T18:18:54.611Z] RECV: method=initialize id=057c92c4-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T18:18:54.612Z] SEND: {"jsonrpc":"2.0","id":"057c92c4-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T18:18:54.655Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T18:23:28.877Z] Calendar Mock Server started
+[2026-09-30T18:23:28.881Z] RECV: method=initialize id=08e11d91-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T18:23:28.881Z] SEND: {"jsonrpc":"2.0","id":"08e11d91-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T18:23:28.924Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T18:23:59.090Z] RECV: method=tools/call id=08e11d91-1 params={"name":"check_availability","arguments":{"time":"2:00 PM","date":"Tuesday, 2023-10-31"}}
+[2026-09-30T18:23:59.091Z] SEND: {"jsonrpc":"2.0","id":"08e11d91-1","result":{"content":[{"type":"text","text":"{\n  \"isAvailable\": false,\n  \"reason\": \"Conflict: Busy at 2:00 PM.\"\n}"}]}}
+[2026-09-30T18:30:16.369Z] Calendar Mock Server started
+[2026-09-30T18:30:16.374Z] RECV: method=initialize id=f98b33c1-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T18:30:16.374Z] SEND: {"jsonrpc":"2.0","id":"f98b33c1-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T18:30:16.421Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T18:32:25.917Z] stdin ended, exiting
+[2026-09-30T18:32:43.775Z] Calendar Mock Server started
+[2026-09-30T18:32:43.779Z] RECV: method=initialize id=bfddee22-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T18:32:43.780Z] SEND: {"jsonrpc":"2.0","id":"bfddee22-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T18:32:43.881Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T18:38:45.160Z] Calendar Mock Server started
+[2026-09-30T18:38:45.164Z] RECV: method=initialize id=76066cac-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T18:38:45.165Z] SEND: {"jsonrpc":"2.0","id":"76066cac-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T18:38:45.211Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T18:53:27.335Z] Calendar Mock Server started
+[2026-09-30T18:53:27.339Z] RECV: method=initialize id=ebe02166-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T18:53:27.339Z] SEND: {"jsonrpc":"2.0","id":"ebe02166-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T18:53:27.384Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:18:28.281Z] Calendar Mock Server started
+[2026-09-30T19:18:28.285Z] RECV: method=initialize id=e29b43e7-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:18:28.286Z] SEND: {"jsonrpc":"2.0","id":"e29b43e7-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:18:28.392Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:18:58.468Z] Calendar Mock Server started
+[2026-09-30T19:18:58.473Z] RECV: method=initialize id=e739d9e6-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:18:58.473Z] SEND: {"jsonrpc":"2.0","id":"e739d9e6-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:18:58.483Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:19:07.876Z] Calendar Mock Server started
+[2026-09-30T19:19:07.881Z] RECV: method=initialize id=47dd98e4-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:19:07.882Z] SEND: {"jsonrpc":"2.0","id":"47dd98e4-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:19:07.892Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:19:12.463Z] Calendar Mock Server started
+[2026-09-30T19:19:12.467Z] RECV: method=initialize id=86516a48-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:19:12.468Z] SEND: {"jsonrpc":"2.0","id":"86516a48-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:19:12.479Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:19:14.725Z] stdin ended, exiting
+[2026-09-30T19:21:49.370Z] Calendar Mock Server started
+[2026-09-30T19:21:49.374Z] RECV: method=initialize id=058cf0d9-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:21:49.374Z] SEND: {"jsonrpc":"2.0","id":"058cf0d9-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:21:49.462Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:28:09.942Z] Calendar Mock Server started
+[2026-09-30T19:28:09.946Z] RECV: method=initialize id=7fe6983f-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:28:09.947Z] SEND: {"jsonrpc":"2.0","id":"7fe6983f-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:28:10.007Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:28:35.261Z] Calendar Mock Server started
+[2026-09-30T19:28:35.266Z] RECV: method=initialize id=184f6a52-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:28:35.266Z] SEND: {"jsonrpc":"2.0","id":"184f6a52-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:28:35.273Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:28:43.366Z] Calendar Mock Server started
+[2026-09-30T19:28:43.370Z] RECV: method=initialize id=ce4d8263-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:28:43.371Z] SEND: {"jsonrpc":"2.0","id":"ce4d8263-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:28:43.385Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:28:48.495Z] Calendar Mock Server started
+[2026-09-30T19:28:48.499Z] RECV: method=initialize id=0938023f-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:28:48.499Z] SEND: {"jsonrpc":"2.0","id":"0938023f-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:28:48.512Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:28:50.703Z] stdin ended, exiting
+[2026-09-30T19:30:24.976Z] Calendar Mock Server started
+[2026-09-30T19:30:24.980Z] RECV: method=initialize id=b52b2b27-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:30:24.980Z] SEND: {"jsonrpc":"2.0","id":"b52b2b27-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:30:25.025Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:32:03.742Z] Calendar Mock Server started
+[2026-09-30T19:32:03.746Z] RECV: method=initialize id=b7df3a6c-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:32:03.746Z] SEND: {"jsonrpc":"2.0","id":"b7df3a6c-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:32:03.858Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:34:11.063Z] Calendar Mock Server started
+[2026-09-30T19:34:11.068Z] RECV: method=initialize id=fb1ff774-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:34:11.068Z] SEND: {"jsonrpc":"2.0","id":"fb1ff774-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:34:11.187Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:35:43.572Z] Calendar Mock Server started
+[2026-09-30T19:35:43.576Z] RECV: method=initialize id=148128bb-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:35:43.576Z] SEND: {"jsonrpc":"2.0","id":"148128bb-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:35:43.675Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:40:31.977Z] RECV: method=tools/call id=ebe02166-1 params={"name":"check_availability","arguments":{"time":"10:00 AM","date":"Friday, July 14, 2023"}}
+[2026-09-30T19:40:31.989Z] SEND: {"jsonrpc":"2.0","id":"ebe02166-1","result":{"content":[{"type":"text","text":"{\n  \"isAvailable\": true,\n  \"reason\": \"Time is available.\"\n}"}]}}
+[2026-09-30T19:41:54.829Z] stdin ended, exiting
+[2026-09-30T19:42:24.677Z] Calendar Mock Server started
+[2026-09-30T19:42:24.681Z] RECV: method=initialize id=a03a1b1e-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:42:24.681Z] SEND: {"jsonrpc":"2.0","id":"a03a1b1e-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:42:24.723Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:43:31.547Z] Calendar Mock Server started
+[2026-09-30T19:43:31.550Z] RECV: method=initialize id=d4591510-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T19:43:31.551Z] SEND: {"jsonrpc":"2.0","id":"d4591510-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T19:43:31.591Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T19:45:14.135Z] RECV: method=tools/call id=d4591510-1 params={"name":"check_availability","arguments":{"date":"2026-10-06","time":"10:00 AM"}}
+[2026-09-30T19:45:14.136Z] SEND: {"jsonrpc":"2.0","id":"d4591510-1","result":{"content":[{"type":"text","text":"{\n  \"isAvailable\": true,\n  \"reason\": \"Time is available.\"\n}"}]}}
+[2026-09-30T20:09:28.501Z] Calendar Mock Server started
+[2026-09-30T20:09:28.532Z] RECV: method=initialize id=8385e2eb-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:09:28.532Z] SEND: {"jsonrpc":"2.0","id":"8385e2eb-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:09:28.628Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:09:35.408Z] stdin ended, exiting
+[2026-09-30T20:10:04.555Z] Calendar Mock Server started
+[2026-09-30T20:10:04.562Z] RECV: method=initialize id=e25ad041-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:10:04.562Z] SEND: {"jsonrpc":"2.0","id":"e25ad041-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:10:04.655Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:10:18.568Z] Calendar Mock Server started
+[2026-09-30T20:10:18.572Z] RECV: method=initialize id=50919236-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:10:18.572Z] SEND: {"jsonrpc":"2.0","id":"50919236-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:10:18.591Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:10:27.093Z] Calendar Mock Server started
+[2026-09-30T20:10:27.098Z] RECV: method=initialize id=78cc2e28-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:10:27.098Z] SEND: {"jsonrpc":"2.0","id":"78cc2e28-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:10:27.104Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:10:30.101Z] Calendar Mock Server started
+[2026-09-30T20:10:30.105Z] RECV: method=initialize id=3ac3a083-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:10:30.106Z] SEND: {"jsonrpc":"2.0","id":"3ac3a083-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:10:30.111Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:10:32.380Z] Calendar Mock Server started
+[2026-09-30T20:10:32.385Z] RECV: method=initialize id=78fdbb80-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:10:32.385Z] SEND: {"jsonrpc":"2.0","id":"78fdbb80-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:10:32.391Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:10:34.257Z] stdin ended, exiting
+[2026-09-30T20:16:53.961Z] Calendar Mock Server started
+[2026-09-30T20:16:53.965Z] RECV: method=initialize id=3b609dd5-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:16:53.966Z] SEND: {"jsonrpc":"2.0","id":"3b609dd5-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:16:54.010Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:17:05.064Z] Calendar Mock Server started
+[2026-09-30T20:17:05.069Z] RECV: method=initialize id=61ca75f3-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:17:05.069Z] SEND: {"jsonrpc":"2.0","id":"61ca75f3-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:17:05.075Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:17:12.974Z] Calendar Mock Server started
+[2026-09-30T20:17:12.979Z] RECV: method=initialize id=cb7577f7-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:17:12.979Z] SEND: {"jsonrpc":"2.0","id":"cb7577f7-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:17:12.987Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:17:15.822Z] Calendar Mock Server started
+[2026-09-30T20:17:15.827Z] RECV: method=initialize id=9387c293-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:17:15.828Z] SEND: {"jsonrpc":"2.0","id":"9387c293-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:17:15.835Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:17:18.353Z] Calendar Mock Server started
+[2026-09-30T20:17:18.359Z] RECV: method=initialize id=ffe53a46-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:17:18.359Z] SEND: {"jsonrpc":"2.0","id":"ffe53a46-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:17:18.366Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:17:20.624Z] Calendar Mock Server started
+[2026-09-30T20:17:20.628Z] RECV: method=initialize id=fb8e0f67-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:17:20.628Z] SEND: {"jsonrpc":"2.0","id":"fb8e0f67-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:17:20.634Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:17:24.760Z] stdin ended, exiting
+[2026-09-30T20:20:41.371Z] Calendar Mock Server started
+[2026-09-30T20:20:41.376Z] RECV: method=initialize id=dfc1a488-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:20:41.376Z] SEND: {"jsonrpc":"2.0","id":"dfc1a488-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:20:41.434Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:20:54.530Z] Calendar Mock Server started
+[2026-09-30T20:20:54.534Z] RECV: method=initialize id=9d748c31-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:20:54.535Z] SEND: {"jsonrpc":"2.0","id":"9d748c31-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:20:54.548Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:21:04.493Z] Calendar Mock Server started
+[2026-09-30T20:21:04.497Z] RECV: method=initialize id=7435fcf5-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:21:04.497Z] SEND: {"jsonrpc":"2.0","id":"7435fcf5-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:21:04.507Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:21:09.131Z] Calendar Mock Server started
+[2026-09-30T20:21:09.135Z] RECV: method=initialize id=9ed07612-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:21:09.135Z] SEND: {"jsonrpc":"2.0","id":"9ed07612-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:21:09.144Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:21:14.198Z] Calendar Mock Server started
+[2026-09-30T20:21:14.202Z] RECV: method=initialize id=3aacbacd-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:21:14.203Z] SEND: {"jsonrpc":"2.0","id":"3aacbacd-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:21:14.212Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:21:17.657Z] Calendar Mock Server started
+[2026-09-30T20:21:17.661Z] RECV: method=initialize id=99b289e9-0 params={"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"Java SDK MCP Client","version":"1.0.0"}}
+[2026-09-30T20:21:17.661Z] SEND: {"jsonrpc":"2.0","id":"99b289e9-0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"calendar-mock","version":"1.0.0"}}}
+[2026-09-30T20:21:17.670Z] RECV: method=notifications/initialized id=undefined params=undefined
+[2026-09-30T20:28:42.884Z] stdin ended, exiting
