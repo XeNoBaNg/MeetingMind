@@ -1,5 +1,6 @@
 package com.meetingmind.config;
 
+import com.meetingmind.auth.service.JwtService;
 import com.meetingmind.meeting.service.MeetingService;
 import com.meetingmind.meeting.service.MeetingSseService;
 import org.junit.jupiter.api.DisplayName;
@@ -18,9 +19,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,6 +30,9 @@ class SecurityIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private JwtService jwtService;
 
     @MockBean
     private MeetingService meetingService;
@@ -49,17 +51,17 @@ class SecurityIntegrationTest {
     @DisplayName("b. Protected API endpoint returns 401 Unauthorized without authentication")
     void protectedMeetingsEndpointReturns401WithoutAuth() throws Exception {
         mockMvc.perform(get("/api/meetings"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(header().exists("WWW-Authenticate"));
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    @DisplayName("c. Protected API endpoint is accessible with valid development Basic Auth")
-    void protectedMeetingsEndpointReturns200WithBasicAuth() throws Exception {
+    @DisplayName("c. Protected API endpoint is accessible with valid JWT")
+    void protectedMeetingsEndpointReturns200WithJwt() throws Exception {
         when(meetingService.getAllMeetings()).thenReturn(Collections.emptyList());
+        String token = jwtService.generateToken("devuser");
 
         mockMvc.perform(get("/api/meetings")
-                        .with(httpBasic("devuser", "devpassword")))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
     }
 
@@ -74,13 +76,14 @@ class SecurityIntegrationTest {
     }
 
     @Test
-    @DisplayName("e. Authenticated SSE access reaches the endpoint successfully")
-    void sseEndpointSucceedsWithBasicAuth() throws Exception {
+    @DisplayName("e. Authenticated SSE access reaches the endpoint successfully with JWT")
+    void sseEndpointSucceedsWithJwt() throws Exception {
         UUID meetingId = UUID.randomUUID();
         when(meetingSseService.subscribe(any(UUID.class))).thenReturn(new SseEmitter());
+        String token = jwtService.generateToken("devuser");
 
         mockMvc.perform(get("/api/meetings/{id}/events", meetingId)
-                        .with(httpBasic("devuser", "devpassword"))
+                        .header("Authorization", "Bearer " + token)
                         .accept(MediaType.TEXT_EVENT_STREAM))
                 .andExpect(status().isOk())
                 .andExpect(request().asyncStarted());

@@ -111,3 +111,127 @@ meetingmind:
       password: devpassword
 ```
 The initializer safely checks if the username already exists and only then persists the user using BCrypt hashing. This keeps our authentication flow secure and prepares us for future phases (Login, Registration, and JWTs) without leaving production credentials hardcoded.
+
+# Phase 13C: Registration + Login API
+
+## Overview
+
+In Phase 13C, we introduced explicit REST API endpoints for user registration and login (`/api/auth/register` and `/api/auth/login`). This step moves us from relying purely on HTTP Basic authentication for testing to a more realistic client-facing authentication flow.
+
+## 1. Registration vs Login Distinction
+
+- **Registration (`POST /api/auth/register`)**: The process of creating a *new identity*. It validates constraints (like password length), checks if the username is taken, hashes the password, and saves the new user to the database.
+- **Login (`POST /api/auth/login`)**: The process of *verifying credentials* for an existing identity. It receives a username and password, uses Spring Security to verify them, and issues a successful response if they match.
+
+## 2. AuthenticationManager
+
+The `AuthenticationManager` is the core Spring Security interface for authenticating a user. Instead of manually querying the database and checking passwords in our controller, we delegate the entire process to this manager:
+`Authentication result = authenticationManager.authenticate(token);`
+
+## 3. AuthenticationProvider
+
+The `AuthenticationManager` doesn't do the work itself. It delegates to one or more `AuthenticationProvider`s. This architecture allows an application to support multiple authentication methods simultaneously (e.g., username/password, LDAP, OAuth2).
+
+## 4. UsernamePasswordAuthenticationToken
+
+To ask the `AuthenticationManager` to verify credentials, we wrap the incoming username and password into a `UsernamePasswordAuthenticationToken`. This token acts as a request to the provider that handles standard login credentials.
+
+## 5. DaoAuthenticationProvider
+
+For our database-backed approach, we configured a `DaoAuthenticationProvider`. This provider is specifically designed to retrieve user details from a `UserDetailsService` and compare the provided password against a hash using a `PasswordEncoder`. 
+
+The complete architecture we built looks like this:
+```text
+AuthenticationManager
+    ↓
+DaoAuthenticationProvider
+    ↓
+CustomUserDetailsService
+    ↓
+UserRepository
+    ↓
+PasswordEncoder
+```
+
+## 6. UserDetailsService & 7. PasswordEncoder Integration
+
+The `DaoAuthenticationProvider` links our existing `CustomUserDetailsService` and `BCryptPasswordEncoder` together. When it receives a token, it asks the `UserDetailsService` to find the user by username. It then uses the `PasswordEncoder` to verify if the raw password provided in the token matches the hashed password retrieved from the database.
+
+## 8. Authentication Failure Handling
+
+Security best practices dictate that we should not leak whether an authentication failure was due to an incorrect username or an incorrect password. Doing so allows attackers to perform username enumeration. In `GlobalExceptionHandler`, we explicitly catch `AuthenticationException` and return a generic `401 Unauthorized` with a simple "Invalid username or password" message. 
+
+## 9. Why Login Doesn't Automatically Mean JWT
+
+Often, developers assume that building a login endpoint immediately requires generating a JSON Web Token (JWT). However, a login endpoint fundamentally just verifies identity. After verification, the server can establish a session (using cookies), return a JWT, or just return user details. In Phase 13C, our `/api/auth/login` endpoint only verifies credentials and returns a safe `LoginResponse`. JWT integration is a separate concern reserved for Phase 13D.
+
+## 10. Explicit Login API vs HTTP Basic
+
+- **HTTP Basic**: The client sends a header (`Authorization: Basic base64(user:pass)`) with *every single request*. The server verifies it every time. It is meant for simple, stateless machine-to-machine communication or early development.
+- **Explicit Login API**: A dedicated endpoint (`/api/auth/login`) that accepts credentials in a JSON body. It is designed to be called once by a frontend application to establish a long-lived identity mechanism (like a session cookie or a token), allowing subsequent requests to use that token rather than sending passwords continuously.
+
+# Phase 13D: JWT Stateless Authentication
+
+## Overview
+
+In **Phase 13D**, MeetingMind transitioned from HTTP Basic authentication to **stateless JWT (JSON Web Token) Bearer authentication**. This eliminates sending raw user credentials on every request and avoids database queries for user authentication during subsequent API operations.
+
+---
+
+## 1. Key Architectural Concepts
+
+### A. JWT Configuration & Secret Enforcement
+- **Strongly Typed Configuration**: Created [JwtProperties](file:///c:/college/Projects/MeetingMind/backend/src/main/java/com/meetingmind/auth/config/JwtProperties.java) annotated with `@ConfigurationProperties(prefix = "meetingmind.security.jwt")`, encapsulating `secret` and `expirationMs`.
+- **Fail-Fast Secret Requirement**: The production configuration (`application.yml`) binds `secret: ${JWT_SECRET}` without a fallback default. If `JWT_SECRET` is omitted from the environment, the application fails to start immediately with an explicit configuration error rather than silently defaulting to a known, insecure secret.
+
+### B. HMAC Signing & Integrity vs. Non-Repudiation
+- **HMAC Shared Secret Properties**: Tokens are signed using HMAC-SHA256 (`HS256`). HMAC signing provides **token integrity and authenticity** for parties possessing the shared secret. It allows any holder of the secret key to verify that the token was generated by a legitimate party holding the same key and has not been altered in transit.
+- **No Non-Repudiation**: HMAC does **not provide non-repudiation** because the secret is symmetric. Any entity possessing the shared secret can both verify and forge signatures. Non-repudiation requires asymmetric cryptography (such as RSA or ECDSA with public/private key pairs).
+
+### C. Encoded vs. Encrypted Payloads
+- **Base64URL Encoded, Not Encrypted**: A JWT consists of three parts separated by dots: `Header.Payload.Signature`. The payload is Base64URL-encoded JSON. Anyone who inspects the token can decode and read its claims in plaintext.
+- **Minimal Claims**: For security, only non-sensitive claims are included:
+  - `sub` (Subject): The user's unique username.
+  - `iat` (Issued At): Token creation timestamp.
+  - `exp` (Expiration): Token expiry timestamp (24 hours).
+  Passwords, password hashes, user emails, or internal identifiers are never stored inside token claims.
+
+### D. Authentication Flow
+```text
+Client (POST /api/auth/login)
+    ↓
+AuthenticationManager.authenticate(...)
+    ↓
+DaoAuthenticationProvider & CustomUserDetailsService (Verifies credentials)
+    ↓
+JwtService.generateToken(username)
+    ↓
+LoginResponse { id, username, token, message }
+```
+
+### E. Request Validation Flow (`JwtAuthenticationFilter`)
+- Extends Spring's `OncePerRequestFilter`.
+- Registered **before** `UsernamePasswordAuthenticationFilter` in `SecurityConfig`.
+- **Public Endpoint Optimization**: Bypasses token processing entirely for public endpoints (`/api/health`, `/api/auth/**`) via `shouldNotFilter()`.
+- **Safe Exception Swallowing**: Catches all token errors (`ExpiredJwtException`, `MalformedJwtException`, `SignatureException`, `UnsupportedJwtException`, `IllegalArgumentException`, `UsernameNotFoundException`). Invalid or expired tokens log a debug message, clear the `SecurityContext`, and do not populate authentication. The request then proceeds to Spring Security's `HttpStatusEntryPoint`, which returns HTTP 401 Unauthorized without leaking internal stack traces or exception details to the client.
+
+### F. Removal of HTTP Basic
+- HTTP Basic (`httpBasic()`) was removed from `SecurityFilterChain`.
+- Session creation is set to `SessionCreationPolicy.STATELESS`.
+- Protected endpoints now strictly require `Authorization: Bearer <token>`.
+
+---
+
+## 2. Browser Token Storage Trade-Offs (Phase 13F Context)
+
+Browser token persistence will be addressed in **Phase 13F**. Storage strategies involve trade-offs:
+
+1. **`localStorage` / `sessionStorage`**:
+   - *Advantage*: Immune to CSRF; simple to access in React and attach to outgoing Axios request headers.
+   - *Risk*: Vulnerable to Cross-Site Scripting (XSS). Any malicious script injected into the client page can read and exfiltrate the stored token.
+2. **`httpOnly`, `Secure`, `SameSite` Cookies**:
+   - *Advantage*: Inaccessible to client JavaScript, mitigating token theft via XSS.
+   - *Risk*: Vulnerable to Cross-Site Request Forgery (CSRF) unless paired with strict SameSite policies and CSRF validation tokens.
+3. **In-Memory Storage (React state) + Refresh Token Cookie**:
+   - *Advantage*: Access tokens live only in memory and disappear when tabs close, minimizing XSS exposure while cookie-based refresh tokens silently renew sessions.
+
