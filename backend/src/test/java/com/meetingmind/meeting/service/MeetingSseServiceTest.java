@@ -7,7 +7,6 @@ import com.meetingmind.meeting.event.MeetingStatusChangedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -15,11 +14,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,8 +59,8 @@ class MeetingSseServiceTest {
 
         when(meetingService.getMeeting(meetingId)).thenReturn(meeting);
 
-        SseEmitter emitter1 = spy(sseService.subscribe(meetingId));
-        SseEmitter emitter2 = spy(sseService.subscribe(meetingId));
+        assertNotNull(sseService.subscribe(meetingId));
+        assertNotNull(sseService.subscribe(meetingId));
 
         MeetingStatusChangedEvent event = new MeetingStatusChangedEvent(
                 meetingId, MeetingStatus.SUMMARIZING, Instant.now());
@@ -84,7 +80,7 @@ class MeetingSseServiceTest {
 
         when(meetingService.getMeeting(meetingId)).thenReturn(meeting);
 
-        SseEmitter emitter = sseService.subscribe(meetingId);
+        assertNotNull(sseService.subscribe(meetingId));
 
         MeetingStatusChangedEvent event = new MeetingStatusChangedEvent(
                 meetingId, MeetingStatus.COMPLETED, Instant.now());

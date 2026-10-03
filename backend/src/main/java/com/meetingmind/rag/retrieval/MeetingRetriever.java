@@ -25,7 +25,6 @@ public class MeetingRetriever {
         this.vectorStore = vectorStore;
     }
 
-    @SuppressWarnings("unchecked")
     public List<MeetingCitation> retrieve(String query, int topK, double minSimilarity) {
         logger.debug("Executing similarity search for query='{}', topK={}, minSimilarity={}", query, topK, minSimilarity);
 

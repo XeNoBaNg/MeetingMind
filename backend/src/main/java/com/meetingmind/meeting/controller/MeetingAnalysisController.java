@@ -1,9 +1,6 @@
 package com.meetingmind.meeting.controller;
 
-import com.meetingmind.ai.orchestrator.MeetingOrchestrator;
 import com.meetingmind.common.response.ApiResponse;
-import com.meetingmind.actionitem.dto.ActionItemDto;
-import com.meetingmind.email.dto.EmailDraftDto;
 import com.meetingmind.meeting.dto.*;
 import com.meetingmind.meeting.entity.Meeting;
 import com.meetingmind.meeting.service.MeetingService;
@@ -83,66 +80,5 @@ public class MeetingAnalysisController {
         response.setCreatedAt(meeting.getCreatedAt());
         response.setUpdatedAt(meeting.getUpdatedAt());
         return response;
-    }
-
-    private MeetingDetailDto mapToDetailDto(Meeting meeting) {
-        MeetingSummaryDto summaryDto = null;
-        if (meeting.getSummary() != null) {
-            summaryDto = new MeetingSummaryDto(
-                meeting.getSummary().getId(),
-                meeting.getSummary().getTitle(),
-                meeting.getSummary().getOverview(),
-                meeting.getSummary().getKeyDecisions(),
-                meeting.getSummary().getDiscussionTopics()
-            );
-        }
-
-        MeetingReviewDto reviewDto = null;
-        if (meeting.getReview() != null) {
-            reviewDto = new MeetingReviewDto(
-                meeting.getReview().getId(),
-                meeting.getReview().isVerified(),
-                meeting.getReview().getHallucinatedItems(),
-                meeting.getReview().getMissedItems(),
-                meeting.getReview().getDateOrAssigneeDiscrepancies(),
-                meeting.getReview().getCommentary()
-            );
-        }
-
-        EmailDraftDto emailDraftDto = null;
-        if (meeting.getEmailDraft() != null) {
-            emailDraftDto = new EmailDraftDto(
-                meeting.getEmailDraft().getId(),
-                meeting.getEmailDraft().getSubject(),
-                meeting.getEmailDraft().getBody(),
-                meeting.getEmailDraft().getRecipientSuggestions(),
-                meeting.getEmailDraft().isReviewed()
-            );
-        }
-
-        List<ActionItemDto> actionItems = null;
-        if (meeting.getActionItems() != null) {
-            actionItems = meeting.getActionItems().stream().map(ai -> new ActionItemDto(
-                ai.getId(),
-                ai.getDescription(),
-                ai.getAssignee(),
-                ai.getDueDate(),
-                ai.getContext(),
-                ai.getStatus()
-            )).collect(Collectors.toList());
-        }
-
-        return new MeetingDetailDto(
-            meeting.getId(),
-            meeting.getTitle(),
-            meeting.getTranscript(),
-            meeting.getStatus(),
-            meeting.getCreatedAt(),
-            meeting.getUpdatedAt(),
-            summaryDto,
-            reviewDto,
-            emailDraftDto,
-            actionItems
-        );
     }
 }

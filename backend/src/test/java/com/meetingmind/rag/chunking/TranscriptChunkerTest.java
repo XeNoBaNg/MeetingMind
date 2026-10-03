@@ -42,8 +42,9 @@ class TranscriptChunkerTest {
             assertEquals("Architecture Sync", doc.getMetadata().get("meetingTitle"));
             assertEquals("2026-09-19", doc.getMetadata().get("meetingDate"));
             assertNotNull(doc.getMetadata().get("speakers"));
-            assertNotNull(doc.getText());
-            assertFalse(doc.getText().isBlank());
+            String text = doc.getText();
+            assertNotNull(text);
+            assertFalse(text.isBlank());
         }
     }
 }

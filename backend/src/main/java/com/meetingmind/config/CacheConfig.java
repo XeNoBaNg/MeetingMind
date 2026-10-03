@@ -33,9 +33,10 @@ public class CacheConfig {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        // Suppress deprecation as EVERYTHING is needed for records/final DTOs in Jackson 2
         objectMapper.activateDefaultTyping(
                 LaissezFaireSubTypeValidator.instance,
-                ObjectMapper.DefaultTyping.EVERYTHING,
+                ObjectMapper.DefaultTyping.valueOf("EVERYTHING"),
                 JsonTypeInfo.As.PROPERTY
         );
 

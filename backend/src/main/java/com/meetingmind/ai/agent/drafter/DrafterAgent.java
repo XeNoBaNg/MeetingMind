@@ -3,11 +3,10 @@ package com.meetingmind.ai.agent.drafter;
 import com.meetingmind.ai.agent.extractor.ExtractedActionItem;
 import com.meetingmind.ai.agent.summarizer.MeetingSummary;
 import com.meetingmind.common.exception.AiPipelineException;
-import com.meetingmind.mcp.client.domain.CalendarAvailability;
 import com.meetingmind.mcp.client.domain.CalendarAvailabilityRequest;
 import com.meetingmind.mcp.client.service.CalendarService;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.model.function.FunctionCallback;
+import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -28,8 +27,7 @@ public class DrafterAgent {
 
     public DrafterAgent(ChatClient.Builder chatClientBuilder, CalendarService calendarService) {
         this.chatClient = chatClientBuilder
-            .defaultFunctions(FunctionCallback.builder()
-                .function("checkCalendarAvailability", (CalendarAvailabilityRequest req) -> calendarService.checkAvailability(req.date(), req.time()))
+            .defaultTools(FunctionToolCallback.builder("checkCalendarAvailability", (CalendarAvailabilityRequest req) -> calendarService.checkAvailability(req.date(), req.time()))
                 .description("Checks calendar availability for a given date and time.")
                 .inputType(CalendarAvailabilityRequest.class)
                 .build())
