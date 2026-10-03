@@ -5,3 +5,9 @@ spring:
       auto-startup: false
     admin:
       auto-create: false
+
+meetingmind:
+  security:
+    jwt:
+      secret: "dGhpc2lzYXZlcnlsb25nc2VjcmV0a2V5Zm9ydGVzdGluZ3B1cnBvc2Vzb25seTI1NmJpdHM="
+      expiration-ms: 86400000
