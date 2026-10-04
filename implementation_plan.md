@@ -1,111 +1,124 @@
-# Phase 13E Implementation Plan: Authorization & Meeting Ownership
+# Phase 14: Observability Implementation Plan
 
-## 1. User ↔ Meeting Relationship & Data Migration
-- **Schema Change**: Introduce a `@ManyToOne(fetch = FetchType.LAZY)` relationship on `Meeting` named `owner` referencing the `User` entity, mapped to `owner_id` column in the `meetings` table.
-- **Migration & Legacy Data Strategy**:
-  - The column will be added as `nullable = true` (`@JoinColumn(name = "owner_id", nullable = true)`) so existing PostgreSQL records are preserved without breaking Hibernate `ddl-auto: update`.
-  - **Inaccessibility of Legacy Data**: Legacy meetings where `owner == null` will remain in the database (not deleted), but will be inaccessible to regular authenticated users because all user queries filter strictly by `owner == authenticatedUser`.
-  - Legacy meetings will **not** be silently or arbitrarily backfilled to any user.
-  - All new meetings created going forward will strictly require and persist an authenticated `owner`.
-  - Re-indexing existing owned meetings: When re-indexing is triggered, only meetings with non-null owners will be indexed with `ownerId` metadata. Legacy unowned meetings will remain unindexed and inaccessible.
+## 1. Current Observability Gaps
+After inspecting the MeetingMind architecture, several critical observability gaps exist:
+- **No Structured Logging:** Logs are plain text, making it difficult to search and parse programmatically in production log aggregators.
+- **Lost Context:** A logical request (e.g., analyzing a meeting) crosses HTTP boundaries, into a Kafka topic, gets picked up by a consumer, and is processed in an `@Async` thread by the `MeetingOrchestrator`, which then calls multiple AI agents. Currently, logs from the consumer, orchestrator, and individual agents cannot be correlated back to the originating HTTP request.
+- **Rudimentary Health Checks:** The custom `HealthController` simply returns `{"status": "UP"}`. It does not verify if PostgreSQL, Redis, or Kafka are actually reachable.
+- **Lack of Metrics:** We have no operational metrics into how many meetings are processed, the latency of the multi-agent AI pipeline stages, or failure rates of LLM calls.
+- **No Distributed Tracing:** The distributed call graph across HTTP -> Kafka -> Async Orchestrator -> LLM is completely unrepresented.
 
-## 2. Meeting Creation Authorization
-- **Identity Source**: The authenticated identity is obtained server-side from `SecurityContextHolder.getContext().getAuthentication().getName()` (or `@AuthenticationPrincipal UserDetails`).
-- **No Client Manipulation**: The `MeetingRequest` DTO will **not** include an `ownerId` or `userId`. Any client-supplied identity will be ignored/disallowed. The server looks up the authenticated `User` from `UserRepository` by username and assigns it as `meeting.setOwner(currentUser)`.
+## 2. Proposed Architecture
+We will integrate the standard Spring Boot observability stack using **Micrometer** and **OpenTelemetry**.
+- **Logs:** Adopt JSON structured logging using `logstash-logback-encoder` to standardize log output into machine-readable JSON.
+- **Traces & Correlation:** Use Micrometer Tracing with OpenTelemetry to generate a distributed `traceId` and `spanId` for every incoming HTTP request. This trace context will be propagated across Kafka message headers and into `@Async` thread executions.
+- **Metrics:** Use Micrometer's `MeterRegistry` and Spring's auto-configured binders to expose application and framework metrics over Prometheus format.
+- **Actuator:** Replace the custom health endpoint with Spring Boot Actuator, leveraging its built-in infrastructure checks.
+- **Tracing Backend:** We will introduce a local Docker-based Zipkin container (`openzipkin/zipkin`) to collect and visualize distributed traces locally.
 
-## 3. Meeting Read Authorization (404 Enumeration Protection)
-- **404 Not Found over 403 Forbidden**: If a user requests a meeting ID that does not exist or belongs to another user, the API will respond with **404 Not Found** (via `ResourceNotFoundException`). This prevents attackers from enumerating valid meeting UUIDs.
-- **Ownership-Aware Repository Queries**:
-  - `MeetingRepository.findByIdAndOwner(UUID id, User owner)`
-  - `MeetingRepository.findAllByOwnerOrderByCreatedAtDesc(User owner)`
-- **User-Facing Service**:
-  - `meetingService.getMeetingDetail(id, currentUser)` fetches only if `owner == currentUser`.
-  - `meetingService.getAllMeetings(currentUser)` returns only meetings owned by `currentUser`.
+## 3. Technologies & Dependencies
+All observability dependencies will strictly align with Spring Boot 3.3.3 dependency management:
+- `org.springframework.boot:spring-boot-starter-actuator`: Core metrics, health probes, and operational endpoints.
+- `io.micrometer:micrometer-registry-prometheus`: To expose metrics in Prometheus format at `/actuator/prometheus`.
+- `io.micrometer:micrometer-tracing-bridge-otel`: Bridges Spring's `Observation` / `Tracer` API to OpenTelemetry.
+- `io.opentelemetry:opentelemetry-exporter-zipkin`: Exports OpenTelemetry spans to the local Zipkin server.
+- `io.micrometer:context-propagation`: Facilitates snapshotting and restoring ThreadLocal context (such as trace context) across asynchronous boundaries.
+- `net.logstash.logback:logstash-logback-encoder:7.4`: Encodes Logback events into structured JSON format with MDC fields.
 
-## 4. Meeting Mutation Authorization & System vs User Separation
-- **Separation of Concerns (User vs System)**:
-  - Authorization is **not** designed as "if HTTP request -> check owner, else bypass."
-  - **User Operations**: Endpoints called by users require authenticated user context and enforce ownership at the service/repository boundary:
-    $$\text{JWT} \longrightarrow \text{Ownership Authorization} \longrightarrow \text{Business Operation}$$
-  - **Internal System Operations**: Background tasks (Kafka consumers, `MeetingOrchestrator`) operate as trusted system processes processing an already-authorized pipeline event. System operations (such as `saveSummary`, `saveActionItems`, `saveEmailDraft`, `saveReview`, and updating status during analysis) are explicitly separate service methods reserved for internal system processing:
-    $$\text{Kafka Event} \longrightarrow \text{Trusted Internal Processing} \longrightarrow \text{System Operation}$$
-  - Ownership enforcement is structural and never depends on whether `SecurityContext` happens to exist.
+## 4. Logging Design
+- Provide a `logback-spring.xml` file.
+- Configure a console appender that outputs structured JSON in production/standard profile, formatting timestamps, log levels, logger names, messages, and MDC key-values.
+- Micrometer Tracing automatically injects `traceId` and `spanId` into SLF4J MDC when a span is active.
+- Refactor log statements across `MeetingAnalysisController`, `MeetingAnalysisConsumer`, and `MeetingOrchestrator` to remove ad-hoc formatting and rely on structured context.
+- **Strict Privacy Rule:** Absolutely no passwords, JWTs, API keys, raw transcripts, prompts, or LLM-generated texts will be logged.
 
-## 5. Method-Level Security & Roles
-- **Enable Method Security**: Add `@EnableMethodSecurity` to `SecurityConfig`.
-- **Minimal Authority Model**: Assign `ROLE_USER` as the baseline granted authority in `CustomUserDetailsService` upon authentication.
-- **Ownership over Roles**: Avoid scattering `@PreAuthorize("hasRole('USER')")` on every endpoint. Use `@PreAuthorize` selectively only where method-level access guards add clarity, while keeping resource ownership verification authoritative in the domain/repository layer.
-  - *Role-based*: "Is the caller an authenticated user?" (e.g. handled by URL filters or baseline checks).
-  - *Ownership*: "Does this specific resource belong to this caller?" (handled via `findByIdAndOwner` / explicit user checks).
+## 5. Trace ID vs Correlation ID
+- Conceptually, **Trace ID** and **Correlation ID** are distinct concepts:
+  - A *Correlation ID* is often an application-level identifier passed across services to group logs of a single user action or business transaction.
+  - A *Trace ID* is a standard distributed tracing identifier (W3C Trace Context) that uniquely identifies an end-to-end distributed execution tree composed of individual timing spans.
+- In MeetingMind, we intentionally **do not** introduce a redundant separate application correlation ID header. The W3C-compliant distributed `traceId` provided by OpenTelemetry/Micrometer Tracing sufficiently satisfies all log correlation and distributed tracing requirements.
+- The Logback pattern and JSON provider will extract `traceId` and `spanId` directly from the MDC.
 
-## 6. Action Items Authorization
-- **Hierarchical Ownership Boundary**: Action items belong to a `Meeting`, and the `Meeting` belongs to a `User`.
-  $$\text{User} \longrightarrow \text{Meeting} \longrightarrow \text{ActionItem}$$
-- **Verification**:
-  - `ActionItemController.getAllActionItems(user)` returns action items belonging to meetings owned by `currentUser` (e.g. via `actionItemRepository.findAllByMeetingOwner(currentUser)`).
-  - `ActionItemController.updateStatus(id, status, user)` resolves the action item, verifies that `actionItem.getMeeting().getOwner().equals(currentUser)`, and throws a 404/not found if it does not match.
-- Action items do not need a redundant direct `User` foreign key; the meeting boundary is the single source of truth.
+## 6. @Async Context Propagation
+- Existing inspection shows `AsyncConfig.java` implements `WebMvcConfigurer` to configure MVC async timeouts (600,000 ms) and customizes Tomcat's connector timeout for SSE/MCP long-lived connections, relying on `@EnableAsync` with Spring's default task executor.
+- To preserve existing execution semantics while adding tracing context propagation:
+  - We will define a `ThreadPoolTaskExecutor` bean in `AsyncConfig` (preserving generous timeouts and capacity).
+  - We will attach a `TaskDecorator` utilizing `ContextSnapshot.capture().setThreadLocalsFrom(...)` (via `io.micrometer:context-propagation`) or Micrometer Tracing's context propagation.
+  - This ensures that when `MeetingAnalysisConsumer` invokes `@Async processMeeting(...)`, the active trace context from the Kafka listener thread is seamlessly transferred to the async worker thread.
 
-## 7. Ownership-Aware RAG
-- **Authoritative Ownership**: Derived strictly from `Meeting -> owner -> User` during indexing. Never rely on client-supplied user parameters.
-- **Enforcement at Service/Retrieval Boundary**:
-  - Ownership filtering is enforced at the `RagService` and `MeetingRetriever` boundary, not solely in the controller.
-  - `RagService` methods (`searchHistoricalMeetings`, `queryHistoricalMeetings`) take the authenticated user / owner context and mandate owner filtering.
-- **Index Tagging**:
-  - When a meeting transcript is indexed, attach `ownerId` (the UUID string of the meeting's owner) to each chunk's metadata in `Document`.
-  - Re-indexing completed meetings: only owned meetings will be indexed with their `ownerId`. Legacy meetings without an owner are not indexed.
-- **Retrieval / Search Filtering**:
-  - `MeetingRetriever` strictly applies a vector store filter: `ownerId == currentUserId`.
-  - Unowned legacy chunks or chunks from other users will not match the equality filter, guaranteeing strict isolation.
+## 7. Metrics Design & Verification
+- **Application Metrics (Custom):**
+  - Timers: `meetingmind.ai.agent.duration` (tagged by `agent`: `summarizer`, `extractor`, `drafter`, `reviewer`, and `status`: `success` or `failure`).
+  - Timers: `meetingmind.analysis.duration` (total orchestrator pipeline duration).
+  - Counters: `meetingmind.analysis.requests` (tagged by `status`: `started`, `completed`, `failed`).
+- **Framework & Kafka Metrics:**
+  - In Spring Boot 3.3.3 (Spring Kafka 3.2.x), enabling `spring.kafka.template.observation-enabled=true` and `spring.kafka.listener.observation-enabled=true` automatically registers Micrometer observations (`spring.kafka.template` and `spring.kafka.listener` timer metrics with tags for topic, partition, etc.).
+  - Furthermore, Spring Boot's `KafkaMetricsAutoConfiguration` automatically binds raw Apache Kafka consumer metrics (including consumer fetch latency and records-lag if exposed by the underlying Kafka client) directly into the `MeterRegistry`.
+  - We will rely strictly on these built-in metrics and will **not** build redundant custom Kafka metrics.
 
-## 8. Ownership-Aware SSE
-- **Pre-Connection Validation**:
-  - `GET /api/meetings/{id}/events` resolves the authenticated user from the JWT before establishing the connection.
-  - Checks `meetingRepository.findByIdAndOwner(id, currentUser)`.
-  - If the meeting does not exist or is not owned by the caller, rejects immediately with 404 before calling `meetingSseService.subscribe(id)`.
-  - Avoids dangling subscriptions and async authorization leaks.
+## 8. Actuator/Health Design & Security
+- Remove the custom `HealthController` at `/api/health`.
+- Actuator's `/actuator/health` endpoint will be configured with:
+  - `management.endpoint.health.show-details=when-authorized`
+  - `management.endpoint.health.probes.enabled=true` (enables `/actuator/health/liveness` and `/actuator/health/readiness`).
+- Actuator automatically auto-configures health indicators for PostgreSQL (`db`), Redis (`redis`), and Kafka (`kafka`).
+- **Endpoint Exposure & Security:**
+  - Only `health` and `prometheus` endpoints will be exposed over the web: `management.endpoints.web.exposure.include=health,prometheus`.
+  - In `SecurityConfig.java`:
+    - Public access: `/actuator/health/**` (allowing minimal status `UP`/`DOWN` without leaking database URLs or component internals to unauthenticated clients).
+    - Protected access: `/actuator/prometheus` and all other actuator paths will require JWT authentication (`.requestMatchers("/actuator/prometheus").authenticated()`).
+  - Sensitive management endpoints (`env`, `beans`, `configprops`, `heapdump`) will not be exposed over HTTP.
 
-## 9. MCP (Model Context Protocol) Architecture & System Trust
-- **No Identity Spoofing**: Since the current MCP architecture does not propagate JWT identities from a browser, we will **not** invent a fragile identity spoofing mechanism or client-controlled user headers.
-- **System-Level Trust & Separation**:
-  - MCP operations will be treated explicitly as trusted system-level operations.
-  - MCP tools will call dedicated system-level methods (or operate via a dedicated system service path) rather than bypassing ownership inside user-facing service methods.
-  - Normal REST, SSE, and RAG services will **not** weaken their ownership checks to accommodate MCP.
-  - This limitation and architecture will be explicitly documented.
+## 9. AI Tracing (Spans vs Metrics)
+- **Metrics vs Tracing Distinction:**
+  - Metrics provide aggregated operational values (e.g., P95 latency of the summarizer, error counts).
+  - Traces provide the structural causal breakdown of a specific execution.
+- We will use Micrometer's `Tracer` / `ObservationRegistry` to create explicit child spans within the pipeline:
+  - Parent span: `meeting_analysis` (from Kafka listener into `MeetingOrchestrator`)
+    - Child span: `summarizer_agent`
+    - Child span: `extractor_agent`
+    - Child span: `drafter_agent`
+    - Child span: `reviewer_agent`
+- **Privacy Rules:** Spans will only record operational metadata as tags (e.g., `agent.name`, `status`, `retry.count`). No transcripts, prompts, or generated outputs will ever be recorded in span tags or log events.
 
-## 10. API & DTO Safety
-- **No Sensitive Leakage**:
-  - `ownerUsername` in response DTOs is optional and will not be unnecessarily added unless needed. Password hashes and internal security details are never exposed.
-  - `MeetingRequest` and other input DTOs will not accept client-provided owner fields.
+## 10. Local Distributed Tracing Backend (Zipkin)
+- We will add the standard Zipkin container to `infrastructure/docker/docker-compose.yml`:
+  ```yaml
+  zipkin:
+    image: openzipkin/zipkin:3.4
+    container_name: meetingmind-zipkin
+    ports:
+      - "9411:9411"
+  ```
+- Spring Boot will be configured with `management.zipkin.tracing.endpoint: http://localhost:9411/api/v2/spans` and `management.tracing.sampling.probability: 1.0` for local development.
 
-## 11. Integration Testing Plan
-Add comprehensive integration tests using `@SpringBootTest` + `MockMvc`:
-1. **Authentication Gates**:
-   - Unauthenticated requests to `/api/meetings`, `/api/action-items`, `/api/rag/**` return `401 Unauthorized`.
-2. **Meeting List & Read Isolation**:
-   - User A registers & logs in; creates Meeting A.
-   - User B registers & logs in; creates Meeting B.
-   - **List isolation**:
-     - User A `GET /api/meetings` receives ONLY Meeting A.
-     - User B `GET /api/meetings` receives ONLY Meeting B.
-   - **Read isolation (IDOR protection)**:
-     - User A `GET /api/meetings/{meetingA_Id}` returns 200 OK.
-     - User A `GET /api/meetings/{meetingB_Id}` returns 404 Not Found.
-     - User B `GET /api/meetings/{meetingA_Id}` returns 404 Not Found.
-3. **Meeting Mutation IDOR Protection**:
-   - Verify every meeting mutation endpoint (e.g., `POST /api/meetings` ignores client owner; `POST /api/rag/index/{meetingId}` returns 404 for another user's meeting; `PATCH /api/action-items/{id}/status` returns 404 for another user's action item).
-4. **SSE Authorization**:
-   - User A connecting to `/api/meetings/{meetingB_Id}/events` is rejected with 404 prior to streaming.
-5. **RAG Service-Boundary Isolation**:
-   - User A searching or querying historical meetings only receives citations from Meeting A, never Meeting B.
+## 11. Testing Strategy
+- **`ActuatorSecurityTest`:**
+  - Verify `/actuator/health` returns HTTP 200 with minimal payload `{"status":"UP"}` for unauthenticated requests.
+  - Verify `/actuator/prometheus` returns HTTP 401 Unauthorized when unauthenticated, and HTTP 200 with Prometheus text output when authenticated with a valid JWT.
+- **`ObservabilityIntegrationTest`:**
+  - Verify that `MeterRegistry` contains our custom meters (`meetingmind.analysis.requests`, `meetingmind.ai.agent.duration`).
+  - Verify that health endpoints function without flakiness. Note: Phase 15 (Testcontainers) will provide isolated, reproducible infrastructure containers. For unit/integration tests without full live clusters, tests will avoid assuming live multi-node broker state.
+- **Regression Testing:** Run the entire test suite (`MeetingOwnershipIntegrationTest`, `MeetingCacheIntegrationTest`, `MeetingAnalysisControllerTest`, etc.) to verify zero regressions.
 
-## 12. Documentation
-Update `walkthrough.md` with:
-- Authentication vs. Authorization
-- Resource Ownership and IDOR prevention
-- 404 Not Found vs. 403 Forbidden for resource enumeration prevention
-- Role-based vs. Ownership-based authorization
-- System Operations (Kafka, MCP) vs. User Operations (REST, SSE, RAG)
-- Vector metadata filtering for ownership-aware RAG at the service layer
-- SSE pre-connection authorization
-- Complete end-to-end authorization flow diagram
+## 12. Documentation Changes
+`walkthrough.md` will be updated with:
+- Fundamentals: Logs vs Metrics vs Distributed Traces.
+- Trace ID vs Correlation ID rationale in MeetingMind.
+- Propagation mechanics across HTTP -> Kafka -> Async Orchestrator -> AI Agents.
+- Actuator endpoints, health probes (Liveness vs Readiness), and security rules.
+- How to start Zipkin via Docker Compose and inspect distributed spans.
+- Verification instructions using curl and the application endpoints.
+
+## 13. Step-by-Step Implementation Order
+1. **Dependencies:** Update `backend/pom.xml` with Actuator, Micrometer Prometheus, Micrometer Tracing (OTel), Zipkin exporter, Context Propagation, and Logstash Logback encoder.
+2. **Infrastructure:** Add Zipkin service to `infrastructure/docker/docker-compose.yml`.
+3. **Configuration:** Update `application.yml` with management endpoints, tracing sampling, Zipkin endpoint, Kafka observation, and health settings.
+4. **Async Configuration:** Update `AsyncConfig.java` to define a `ThreadPoolTaskExecutor` decorated with context propagation to ensure trace context flows into `@Async` methods.
+5. **Security Configuration:** Update `SecurityConfig.java` to allow `/actuator/health/**` publicly while restricting `/actuator/prometheus` and other actuator paths to authenticated requests. Remove `HealthController.java`.
+6. **Logging:** Create `src/main/resources/logback-spring.xml` for structured JSON logging with MDC traceId/spanId.
+7. **Instrumentation:**
+   - Update `MeetingOrchestrator.java` to record `meetingmind.analysis.*` metrics and create child spans (`summarizer_agent`, `extractor_agent`, `drafter_agent`, `reviewer_agent`) using `Tracer` / `ObservationRegistry`.
+   - Update `MeetingAnalysisConsumer.java` with structured logging.
+8. **Testing:** Write `ActuatorSecurityTest` and `ObservabilityIntegrationTest`. Run entire test suite.
+9. **Documentation:** Update `walkthrough.md`.

@@ -54,12 +54,13 @@ public class MeetingAnalysisController {
         kafkaTemplate.send("meeting-analysis-requests", meeting.getId().toString(), event)
                 .whenComplete((result, ex) -> {
                     if (ex == null) {
-                        logger.info("Sent event producer -> topic: {} -> partition: {} -> offset: {}",
+                        logger.info("Kafka producer published analysis request for meeting ID: {}, topic: {}, partition: {}, offset: {}",
+                                meeting.getId(),
                                 result.getRecordMetadata().topic(),
                                 result.getRecordMetadata().partition(),
                                 result.getRecordMetadata().offset());
                     } else {
-                        logger.error("Failed to send meeting analysis request for {}", meeting.getId(), ex);
+                        logger.error("Failed to send meeting analysis request for meeting ID: {}", meeting.getId(), ex);
                     }
                 });
 
