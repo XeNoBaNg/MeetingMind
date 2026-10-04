@@ -2,6 +2,7 @@ package com.meetingmind.meeting.entity;
 
 import com.meetingmind.actionitem.entity.ActionItemEntity;
 import com.meetingmind.email.entity.EmailDraftEntity;
+import com.meetingmind.user.entity.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -35,6 +36,10 @@ public class Meeting {
 
     @OneToOne(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private EmailDraftEntity emailDraft;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = true)
+    private User owner;
 
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ActionItemEntity> actionItems = new ArrayList<>();
@@ -94,6 +99,9 @@ public class Meeting {
         }
     }
     
+    public User getOwner() { return owner; }
+    public void setOwner(User owner) { this.owner = owner; }
+
     public void addActionItem(ActionItemEntity item) {
         actionItems.add(item);
         item.setMeeting(this);

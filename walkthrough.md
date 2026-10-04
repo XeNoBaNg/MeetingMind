@@ -235,3 +235,171 @@ Browser token persistence will be addressed in **Phase 13F**. Storage strategies
 3. **In-Memory Storage (React state) + Refresh Token Cookie**:
    - *Advantage*: Access tokens live only in memory and disappear when tabs close, minimizing XSS exposure while cookie-based refresh tokens silently renew sessions.
 
+# Phase 13E: Authorization + Meeting Ownership
+
+## Overview
+
+In **Phase 13E**, MeetingMind expanded from verifying identity (Authentication in Phase 13D) to enforcing resource permissions and data isolation (Authorization). Every meeting, action item, SSE event stream, and RAG vector chunk is now authoritatively bound to the user who created it.
+
+---
+
+## 1. Authentication vs. Authorization
+
+| Concept | Question Answered | Mechanism in MeetingMind |
+| :--- | :--- | :--- |
+| **Authentication (AuthN)** | *"Who are you?"* | Validating credentials, issuing and verifying JWTs in `JwtAuthenticationFilter`. |
+| **Authorization (AuthZ)** | *"What are you allowed to do with this resource?"* | Enforcing ownership boundaries (`owner == currentUser`) on meetings, action items, SSE streams, and RAG retrieval queries. |
+
+Authentication merely proves identity. Without authorization, any authenticated user can read or tamper with any other user's confidential meetings.
+
+---
+
+## 2. Resource Ownership & Insecure Direct Object References (IDOR)
+
+### What is an IDOR Vulnerability?
+An **Insecure Direct Object Reference (IDOR)** occurs when an application exposes a reference to an internal domain object (such as `/api/meetings/d3b07384-d113-4f9e-8c3b-5a1e2f3d4c5b`) in an API endpoint, and fails to verify that the requesting user has authorization to access or mutate that specific object.
+
+### How MeetingMind Prevents IDOR
+1. **Server-Derived Identity**:
+   - Meeting creation completely ignores any client-supplied `ownerId` in request bodies.
+   - The owner is authoritatively resolved from the authenticated `SecurityContextHolder`:
+     ```java
+     String username = SecurityContextHolder.getContext().getAuthentication().getName();
+     User currentUser = userService.getUserByUsername(username);
+     Meeting meeting = meetingService.createMeeting(request, currentUser);
+     ```
+2. **Ownership Scoping in Repositories**:
+   - Queries query by both ID and Owner:
+     ```java
+     Optional<Meeting> findByIdAndOwner(UUID id, User owner);
+     List<Meeting> findAllByOwnerOrderByCreatedAtDesc(User owner);
+     ```
+   - Action items are scoped through the parent meeting owner:
+     ```java
+     Optional<ActionItem> findByIdAndMeeting_Owner(UUID id, User owner);
+     List<ActionItem> findAllByMeeting_Owner(User owner);
+     ```
+
+---
+
+## 3. 404 Not Found vs. 403 Forbidden: Anti-Enumeration Design
+
+A common security design flaw is returning `403 Forbidden` when a user attempts to access a resource that belongs to someone else.
+
+### Why Return 404 Not Found?
+- **403 Forbidden Leaks Existence**: If requesting `/api/meetings/UUID-1` returns `403 Forbidden` but `/api/meetings/UUID-2` returns `404 Not Found`, an attacker immediately learns that `UUID-1` is a valid, existing meeting in the system. This enables resource enumeration and targeted reconnaissance.
+- **404 Conceals Existence**: Returning `404 Not Found` (via `ResourceNotFoundException`) makes unauthorized resources indistinguishable from completely non-existent resources:
+  ```java
+  return meetingRepository.findByIdAndOwner(id, user)
+          .orElseThrow(() -> new ResourceNotFoundException("Meeting not found: " + id));
+  ```
+  The caller cannot tell whether the UUID belongs to another tenant or never existed at all.
+
+---
+
+## 4. Role-Based Access Control (RBAC) vs. Ownership-Based Authorization (ABAC)
+
+- **Role-Based Access Control (RBAC)**: Checks broad user groups or capabilities (e.g., `hasRole('ADMIN')` vs `hasRole('USER')`).
+  - While we assigned a baseline `ROLE_USER` to authenticated users and enabled Spring Security method security (`@EnableMethodSecurity`), relying solely on `@PreAuthorize("hasRole('USER')")` **does not prevent IDOR**. Both Alice and Bob have `ROLE_USER`, so an RBAC check alone would allow Alice to read Bob's meetings.
+- **Ownership-Based Authorization (Attribute/Resource-Based)**: Evaluates the relationship between the subject and the specific resource instance (`meeting.owner == currentUser`). MeetingMind enforces ownership at the service and data layers for multi-tenant isolation.
+
+---
+
+## 5. User Operations vs. System Operations
+
+MeetingMind clearly separates user-facing operations from internal trusted system operations:
+
+```text
+┌──────────────────────────────────────────────────────────┐
+│                     USER REQUESTS                        │
+│   (REST APIs, SSE Subscriptions, RAG Queries)            │
+│   • Requires JWT Bearer Token                            │
+│   • Authenticated User in SecurityContext                │
+│   • Scoped via findByIdAndOwner / findAllByOwner         │
+└────────────────────────────┬─────────────────────────────┘
+                             │
+                             ▼
+               MeetingService / ActionItemService
+                             ▲
+                             │
+┌────────────────────────────┴─────────────────────────────┐
+│                    SYSTEM OPERATIONS                     │
+│   (Kafka Consumers, AI Pipeline, MCP Tools)              │
+│   • Executes on background threads without HTTP/JWT      │
+│   • Dedicated explicit methods:                          │
+│     - getMeetingForSystem(id)                            │
+│     - updateStatusForSystem(id, status)                  │
+│     - getAllMeetingsForSystem()                          │
+│   • MCP Tools operate under documented system trust      │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Why this separation matters**:
+- Prevents brittle, error-prone checks like `if (SecurityContextHolder.getContext().getAuthentication() == null)`.
+- Guarantees that user-facing endpoints cannot accidentally bypass ownership validation.
+- Allows background tasks (Kafka consumers, AI orchestrator) to update meeting statuses without spoofing synthetic user credentials.
+
+---
+
+## 6. RAG Service-Boundary Vector Ownership
+
+In Retrieval-Augmented Generation (RAG), vector embeddings are stored in pgvector metadata alongside chunks.
+
+1. **Authoritative Indexing**:
+   - During transcript chunking and vector store ingestion, the `ownerId` is authoritatively retrieved from the PostgreSQL `Meeting` entity and stamped into each document's metadata:
+     ```java
+     metadata.put("ownerId", meeting.getOwner().getId().toString());
+     ```
+   - Unowned/legacy meetings without an owner are not indexed.
+2. **Service-Boundary Filtering**:
+   - `RagService` and `MeetingRetriever` enforce `ownerId` filtering directly inside pgvector retrieval:
+     ```java
+     SearchRequest.query(query)
+         .withTopK(topK)
+         .withSimilarityThreshold(minSimilarity)
+         .withFilterExpression("ownerId == '" + ownerId + "'");
+     ```
+   - Searches return **only** vector chunks belonging to the requesting user. Users cannot retrieve or infer contents from another user's meetings through vector similarity search.
+
+---
+
+## 7. SSE Pre-Connection Ownership Verification
+
+Server-Sent Events (`GET /api/meetings/{meetingId}/events`) keep long-lived HTTP connections open.
+- The controller verifies meeting ownership **before** registering the client with `MeetingSseService`:
+  ```java
+  meetingService.verifyMeetingOwnership(id, currentUser);
+  return sseService.subscribe(id);
+  ```
+- If an unauthenticated or unauthorized user requests the stream, a `404 Not Found` is returned immediately. No idle SSE emitter or connection resources are allocated.
+
+---
+
+## 8. End-to-End Authorization Sequence
+
+```text
+Client Request: GET /api/meetings/{id}
+   │  Header: Authorization: Bearer <jwt>
+   ▼
+[JwtAuthenticationFilter]
+   │  1. Validates signature and expiration
+   │  2. Extracts username: "alice"
+   │  3. Populates SecurityContextHolder with UsernamePasswordAuthenticationToken
+   ▼
+[MeetingAnalysisController]
+   │  4. Resolves authenticated username from SecurityContextHolder
+   │  5. Calls userService.getUserByUsername("alice") -> User entity
+   │  6. Delegates to meetingService.getMeetingDetail(id, user)
+   ▼
+[MeetingService]
+   │  7. Executes meetingRepository.findByIdAndOwner(id, user)
+   ▼
+[PostgreSQL Database]
+   │  8. SELECT * FROM meetings WHERE id = :id AND owner_id = :userId
+   ▼
+Response
+   ├── If Found and Owned: Returns 200 OK + MeetingDetailDto
+   └── If Not Found or Not Owned: Throws ResourceNotFoundException -> 404 Not Found
+```
+
+

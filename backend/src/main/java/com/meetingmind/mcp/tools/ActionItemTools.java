@@ -21,12 +21,18 @@ public class ActionItemTools {
         this.actionItemService = actionItemService;
     }
 
+    /**
+     * MCP tools currently operate as trusted system-level operations because
+     * the current local/stdio MCP architecture does not propagate browser JWT identity.
+     * These calls explicitly target the separated system service methods to prevent
+     * bypassing user-scoped authorization boundaries.
+     */
     @Tool(description = "Lists action items filtered by completion status or assignee.")
     public List<ActionItemResponseDto> list_action_items(
             @ToolParam(description = "Filter by status: OPEN or DONE") String status,
             @ToolParam(description = "Filter by assignee name") String assignee) {
         
-        List<ActionItemResponseDto> all = actionItemService.getAllActionItems();
+        List<ActionItemResponseDto> all = actionItemService.getAllActionItemsForSystem();
         return all.stream()
                 .filter(item -> status == null || status.isBlank() || item.status().name().equalsIgnoreCase(status))
                 .filter(item -> assignee == null || assignee.isBlank() || (item.assignee() != null && item.assignee().equalsIgnoreCase(assignee)))
@@ -36,12 +42,12 @@ public class ActionItemTools {
     @Tool(description = "Updates the status of an action item to completed (DONE).")
     public ActionItemResponseDto mark_action_item_done(
             @ToolParam(description = "The UUID of the action item") String actionItemId) {
-        return actionItemService.updateStatus(UUID.fromString(actionItemId), ActionItemStatus.DONE);
+        return actionItemService.updateStatusForSystem(UUID.fromString(actionItemId), ActionItemStatus.DONE);
     }
 
     @Tool(description = "Aggregates deliverable statistics and counts for a specific person.")
     public WorkloadResponseDto get_person_workload(
             @ToolParam(description = "Name of the individual") String assignee) {
-        return actionItemService.getWorkloadForAssignee(assignee);
+        return actionItemService.getWorkloadForAssigneeForSystem(assignee);
     }
 }

@@ -20,12 +20,18 @@ public class MeetingTools {
         this.meetingService = meetingService;
     }
 
+    /**
+     * MCP tools currently operate as trusted system-level operations because
+     * the current local/stdio MCP architecture does not propagate browser JWT identity.
+     * These calls explicitly target the separated system service methods to prevent
+     * bypassing user-scoped authorization boundaries.
+     */
     @Tool(description = "Returns a list of recently analyzed meetings with identifiers, dates, and titles.")
     public List<MeetingSummaryDto> list_meetings(
             @ToolParam(description = "Maximum items to return") Integer limit) {
         
         int actualLimit = (limit != null && limit > 0) ? limit : 10;
-        return meetingService.getAllMeetings().stream()
+        return meetingService.getAllMeetingsForSystem().stream()
                 .limit(actualLimit)
                 .map(m -> new MeetingSummaryDto(m.getId().toString(), m.getTitle(), m.getCreatedAt().toString(), m.getStatus().name()))
                 .collect(Collectors.toList());
@@ -34,7 +40,7 @@ public class MeetingTools {
     @Tool(description = "Retrieves the executive summary and key decisions for a specific meeting.")
     public com.meetingmind.meeting.dto.MeetingSummaryDto get_meeting_summary(
             @ToolParam(description = "The UUID of the meeting") String meetingId) {
-        Meeting meeting = meetingService.getMeeting(UUID.fromString(meetingId));
+        Meeting meeting = meetingService.getMeetingForSystem(UUID.fromString(meetingId));
         if (meeting.getSummary() == null) throw new IllegalArgumentException("No summary available for this meeting yet.");
         return new com.meetingmind.meeting.dto.MeetingSummaryDto(
             meeting.getSummary().getId(),

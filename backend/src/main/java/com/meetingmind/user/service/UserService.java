@@ -30,4 +30,10 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
+    @Transactional(readOnly = true)
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new com.meetingmind.common.exception.ResourceNotFoundException("User not found: " + username));
+    }
 }

@@ -29,6 +29,12 @@ public class GlobalExceptionHandler {
         return ApiResponse.error("An unexpected error occurred: " + ex.getMessage());
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiResponse<Void> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        return ApiResponse.error(ex.getMessage());
+    }
+
     @ExceptionHandler(UserAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiResponse<Void> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {

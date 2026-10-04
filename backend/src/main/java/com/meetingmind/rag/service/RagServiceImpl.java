@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -55,9 +56,16 @@ public class RagServiceImpl implements RagService {
             return;
         }
 
+        // Authoritatively derive ownerId from the owning Meeting
+        UUID ownerId = null;
+        Optional<Meeting> meetingOpt = meetingRepository.findById(meetingId);
+        if (meetingOpt.isPresent() && meetingOpt.get().getOwner() != null) {
+            ownerId = meetingOpt.get().getOwner().getId();
+        }
+
         try {
-            logger.info("Indexing transcript for meeting {} ('{}')", meetingId, title);
-            List<Document> chunks = transcriptChunker.chunkTranscript(meetingId, title, meetingDate, transcript);
+            logger.info("Indexing transcript for meeting {} ('{}'), ownerId={}", meetingId, title, ownerId);
+            List<Document> chunks = transcriptChunker.chunkTranscript(meetingId, ownerId, title, meetingDate, transcript);
 
             if (chunks.isEmpty()) {
                 logger.warn("No chunks generated for meeting {}", meetingId);
@@ -74,12 +82,36 @@ public class RagServiceImpl implements RagService {
 
     @Override
     public List<MeetingCitation> searchHistoricalMeetings(RagQueryRequest request) {
-        return meetingRetriever.retrieve(request.query(), request.topK(), request.minSimilarity());
+        return searchHistoricalMeetings(request, null);
+    }
+
+    @Override
+    public List<MeetingCitation> searchHistoricalMeetings(RagQueryRequest request, UUID ownerId) {
+        if (ownerId == null) {
+            logger.warn("searchHistoricalMeetings invoked without ownerId; returning empty citations for security.");
+            return List.of();
+        }
+        return meetingRetriever.retrieve(request.query(), request.topK(), request.minSimilarity(), ownerId);
     }
 
     @Override
     public RagResponse queryHistoricalMeetings(RagQueryRequest request) {
-        List<MeetingCitation> citations = searchHistoricalMeetings(request);
+        return queryHistoricalMeetings(request, null);
+    }
+
+    @Override
+    public RagResponse queryHistoricalMeetings(RagQueryRequest request, UUID ownerId) {
+        if (ownerId == null) {
+            logger.warn("queryHistoricalMeetings invoked without ownerId; returning empty response for security.");
+            return new RagResponse(
+                    request.query(),
+                    "Access denied: owner identity required for historical meeting queries.",
+                    List.of(),
+                    0
+            );
+        }
+
+        List<MeetingCitation> citations = searchHistoricalMeetings(request, ownerId);
 
         if (citations.isEmpty()) {
             return new RagResponse(
@@ -136,7 +168,9 @@ public class RagServiceImpl implements RagService {
         int indexedCount = 0;
 
         for (Meeting meeting : meetings) {
+            // Only index meetings that have an owner; unowned/legacy meetings remain unindexed and inaccessible
             if (meeting.getStatus() == MeetingStatus.COMPLETED 
+                    && meeting.getOwner() != null
                     && meeting.getTranscript() != null 
                     && !meeting.getTranscript().isBlank()) {
                 LocalDate meetingDate = meeting.getCreatedAt() != null 

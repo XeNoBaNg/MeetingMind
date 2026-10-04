@@ -19,11 +19,13 @@ public interface RagService {
      * Retrieval-only similarity search returning matching meeting citations without LLM generation.
      */
     List<MeetingCitation> searchHistoricalMeetings(RagQueryRequest request);
+    List<MeetingCitation> searchHistoricalMeetings(RagQueryRequest request, UUID ownerId);
 
     /**
      * Semantic search and grounded answer generation with meeting citations using Grok.
      */
     RagResponse queryHistoricalMeetings(RagQueryRequest request);
+    RagResponse queryHistoricalMeetings(RagQueryRequest request, UUID ownerId);
 
     /**
      * Scans and indexes all historical completed meetings stored in PostgreSQL.

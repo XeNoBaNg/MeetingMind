@@ -26,11 +26,20 @@ public class MeetingRetriever {
     }
 
     public List<MeetingCitation> retrieve(String query, int topK, double minSimilarity) {
-        logger.debug("Executing similarity search for query='{}', topK={}, minSimilarity={}", query, topK, minSimilarity);
+        return retrieve(query, topK, minSimilarity, null);
+    }
+
+    public List<MeetingCitation> retrieve(String query, int topK, double minSimilarity, UUID ownerId) {
+        logger.debug("Executing similarity search for query='{}', topK={}, minSimilarity={}, ownerId={}",
+                query, topK, minSimilarity, ownerId);
 
         SearchRequest.Builder builder = SearchRequest.builder()
                 .query(query)
                 .topK(topK);
+
+        if (ownerId != null) {
+            builder.filterExpression("ownerId == '" + ownerId + "'");
+        }
 
         if (minSimilarity > 0.0) {
             builder.similarityThreshold(minSimilarity);
