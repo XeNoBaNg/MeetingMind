@@ -27,7 +27,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
+import com.meetingmind.common.exception.ResourceNotFoundException;
 import com.meetingmind.meeting.event.MeetingStatusChangedEvent;
+import com.meetingmind.user.entity.User;
 import java.time.Instant;
 
 @Service
@@ -41,42 +43,73 @@ public class MeetingService {
         this.eventPublisher = eventPublisher;
     }
 
+    // ==========================================
+    // User-Facing Operations (Ownership Enforced)
+    // ==========================================
+
     @Transactional
-    public Meeting createMeeting(String title, String transcript) {
+    public Meeting createMeeting(String title, String transcript, User owner) {
         Meeting meeting = new Meeting();
         meeting.setTitle(title);
         meeting.setTranscript(transcript);
+        meeting.setOwner(owner);
         meeting.setStatus(MeetingStatus.ANALYZING);
         return meetingRepository.save(meeting);
     }
 
     @Transactional(readOnly = true)
-    public Meeting getMeeting(UUID id) {
-        return meetingRepository.findById(id).orElseThrow(() -> new RuntimeException("Meeting not found"));
+    public MeetingDetailDto getMeetingDetail(UUID id, User user) {
+        verifyMeetingOwnership(id, user);
+        return getMeetingDetail(id);
     }
 
     @Cacheable(value = "meetings", key = "#id")
     @Transactional(readOnly = true)
     public MeetingDetailDto getMeetingDetail(UUID id) {
-        Meeting meeting = getMeeting(id);
+        Meeting meeting = getMeetingForSystem(id);
         return mapToDetailDto(meeting);
     }
 
-    @Cacheable(value = "meetings", key = "#id")
     @Transactional(readOnly = true)
-    public MeetingDetailDto getMeetingDto(UUID id) {
-        return getMeetingDetail(id);
+    public List<Meeting> getAllMeetings(User user) {
+        return meetingRepository.findAllByOwnerOrderByCreatedAtDesc(user);
+    }
+
+    @Transactional(readOnly = true)
+    public void verifyMeetingOwnership(UUID id, User user) {
+        meetingRepository.findByIdAndOwner(id, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found: " + id));
+    }
+
+    // ==========================================
+    // Internal System Operations (Trusted Pipeline & MCP)
+    // ==========================================
+
+    @Transactional(readOnly = true)
+    public Meeting getMeetingForSystem(UUID id) {
+        return meetingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found: " + id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Meeting> getAllMeetingsForSystem() {
+        return meetingRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    @Transactional(readOnly = true)
+    public Meeting getMeeting(UUID id) {
+        return getMeetingForSystem(id);
     }
 
     @Transactional(readOnly = true)
     public List<Meeting> getAllMeetings() {
-        return meetingRepository.findAllByOrderByCreatedAtDesc();
+        return getAllMeetingsForSystem();
     }
 
     @Transactional
     @CacheEvict(value = "meetings", key = "#meetingId")
     public void updateStatus(UUID meetingId, MeetingStatus status) {
-        Meeting meeting = getMeeting(meetingId);
+        Meeting meeting = getMeetingForSystem(meetingId);
         meeting.setStatus(status);
         meetingRepository.save(meeting);
         eventPublisher.publishEvent(new MeetingStatusChangedEvent(meetingId, status, Instant.now()));
@@ -85,7 +118,7 @@ public class MeetingService {
     @Transactional
     @CacheEvict(value = "meetings", key = "#meetingId")
     public void saveSummary(UUID meetingId, MeetingSummary summary) {
-        Meeting meeting = getMeeting(meetingId);
+        Meeting meeting = getMeetingForSystem(meetingId);
         
         MeetingSummaryEntity entity = new MeetingSummaryEntity();
         entity.setTitle(summary.title());
@@ -100,7 +133,7 @@ public class MeetingService {
     @Transactional
     @CacheEvict(value = "meetings", key = "#meetingId")
     public void saveActionItems(UUID meetingId, ExtractedActionItemList actionItems) {
-        Meeting meeting = getMeeting(meetingId);
+        Meeting meeting = getMeetingForSystem(meetingId);
         
         if (actionItems != null && actionItems.items() != null) {
             for (ExtractedActionItem item : actionItems.items()) {
@@ -120,7 +153,7 @@ public class MeetingService {
     @Transactional
     @CacheEvict(value = "meetings", key = "#meetingId")
     public void saveEmailDraft(UUID meetingId, EmailDraft draft) {
-        Meeting meeting = getMeeting(meetingId);
+        Meeting meeting = getMeetingForSystem(meetingId);
         
         EmailDraftEntity entity = new EmailDraftEntity();
         entity.setSubject(draft.subject());
@@ -135,7 +168,7 @@ public class MeetingService {
     @Transactional
     @CacheEvict(value = "meetings", key = "#meetingId")
     public void saveReview(UUID meetingId, ReviewResult review) {
-        Meeting meeting = getMeeting(meetingId);
+        Meeting meeting = getMeetingForSystem(meetingId);
         
         MeetingReviewEntity entity = new MeetingReviewEntity();
         entity.setVerified(review.verified());

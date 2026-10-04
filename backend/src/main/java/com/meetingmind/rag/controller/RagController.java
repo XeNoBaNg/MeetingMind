@@ -6,7 +6,10 @@ import com.meetingmind.rag.model.MeetingCitation;
 import com.meetingmind.rag.model.RagQueryRequest;
 import com.meetingmind.rag.model.RagResponse;
 import com.meetingmind.rag.service.RagService;
+import com.meetingmind.user.entity.User;
+import com.meetingmind.user.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -21,36 +24,50 @@ public class RagController {
 
     private final RagService ragService;
     private final MeetingService meetingService;
+    private final UserService userService;
 
-    public RagController(RagService ragService, MeetingService meetingService) {
+    public RagController(RagService ragService, MeetingService meetingService, UserService userService) {
         this.ragService = ragService;
         this.meetingService = meetingService;
+        this.userService = userService;
     }
 
     /**
-     * Retrieval-only endpoint. Executes similarity search across historical meeting chunks.
+     * Retrieval-only endpoint. Executes similarity search scoped to current user's meetings.
      */
     @PostMapping("/search")
-    public ResponseEntity<List<MeetingCitation>> searchHistoricalMeetings(@RequestBody RagQueryRequest request) {
-        List<MeetingCitation> citations = ragService.searchHistoricalMeetings(request);
+    public ResponseEntity<List<MeetingCitation>> searchHistoricalMeetings(
+            @RequestBody RagQueryRequest request,
+            Authentication authentication) {
+        User currentUser = userService.getUserByUsername(authentication.getName());
+        List<MeetingCitation> citations = ragService.searchHistoricalMeetings(request, currentUser.getId());
         return ResponseEntity.ok(citations);
     }
 
     /**
-     * Retrieval + Grounded LLM answering endpoint. Answers user query citing source meetings.
+     * Retrieval + Grounded LLM answering endpoint scoped to current user's meetings.
      */
     @PostMapping("/query")
-    public ResponseEntity<RagResponse> queryHistoricalMeetings(@RequestBody RagQueryRequest request) {
-        RagResponse response = ragService.queryHistoricalMeetings(request);
+    public ResponseEntity<RagResponse> queryHistoricalMeetings(
+            @RequestBody RagQueryRequest request,
+            Authentication authentication) {
+        User currentUser = userService.getUserByUsername(authentication.getName());
+        RagResponse response = ragService.queryHistoricalMeetings(request, currentUser.getId());
         return ResponseEntity.ok(response);
     }
 
     /**
      * Re-indexes or indexes a specific meeting transcript into the vector store.
+     * Verifies ownership to prevent IDOR vulnerabilities.
      */
     @PostMapping("/index/{meetingId}")
-    public ResponseEntity<Map<String, Object>> indexMeeting(@PathVariable UUID meetingId) {
-        Meeting meeting = meetingService.getMeeting(meetingId);
+    public ResponseEntity<Map<String, Object>> indexMeeting(
+            @PathVariable UUID meetingId,
+            Authentication authentication) {
+        User currentUser = userService.getUserByUsername(authentication.getName());
+        meetingService.verifyMeetingOwnership(meetingId, currentUser);
+
+        Meeting meeting = meetingService.getMeetingForSystem(meetingId);
         LocalDate meetingDate = meeting.getCreatedAt() != null 
                 ? meeting.getCreatedAt().toLocalDate() 
                 : LocalDate.now();

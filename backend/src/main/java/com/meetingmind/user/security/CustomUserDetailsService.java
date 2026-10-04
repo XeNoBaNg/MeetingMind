@@ -2,6 +2,7 @@ package com.meetingmind.user.security;
 
 import com.meetingmind.user.entity.User;
 import com.meetingmind.user.repository.UserRepository;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -26,7 +27,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
                 .password(user.getPasswordHash())
-                .authorities(Collections.emptyList())
+                .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")))
                 .build();
     }
 }

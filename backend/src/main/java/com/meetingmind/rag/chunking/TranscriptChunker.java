@@ -33,6 +33,10 @@ public class TranscriptChunker {
     public record Turn(String speaker, String content) {}
 
     public List<Document> chunkTranscript(UUID meetingId, String meetingTitle, LocalDate meetingDate, String transcript) {
+        return chunkTranscript(meetingId, null, meetingTitle, meetingDate, transcript);
+    }
+
+    public List<Document> chunkTranscript(UUID meetingId, UUID ownerId, String meetingTitle, LocalDate meetingDate, String transcript) {
         if (transcript == null || transcript.trim().isEmpty()) {
             return List.of();
         }
@@ -81,6 +85,9 @@ public class TranscriptChunker {
             if (!content.isEmpty()) {
                 Map<String, Object> metadata = new HashMap<>();
                 metadata.put("meetingId", meetingId.toString());
+                if (ownerId != null) {
+                    metadata.put("ownerId", ownerId.toString());
+                }
                 metadata.put("meetingTitle", meetingTitle != null ? meetingTitle : "Untitled Meeting");
                 metadata.put("meetingDate", meetingDate != null ? meetingDate.toString() : LocalDate.now().toString());
                 metadata.put("chunkIndex", chunkIndex++);
