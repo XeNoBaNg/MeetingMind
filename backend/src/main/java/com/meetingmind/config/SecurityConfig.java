@@ -48,6 +48,11 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+
+                        // Actuator metrics and admin endpoints require authentication
+                        .requestMatchers("/actuator/prometheus").authenticated()
+                        .requestMatchers("/actuator/**").authenticated()
 
                         // Explicitly protected business endpoints
                         .requestMatchers("/api/meetings/**").authenticated()

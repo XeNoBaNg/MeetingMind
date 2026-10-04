@@ -4,6 +4,7 @@ import com.meetingmind.ai.orchestrator.MeetingOrchestrator;
 import com.meetingmind.meeting.event.MeetingAnalysisRequestedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -28,7 +29,7 @@ public class MeetingAnalysisConsumer {
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset) {
         
-        logger.info("Consumer received event for meeting {} from consumer group -> topic: meeting-analysis-requests -> partition: {} -> offset: {} -> orchestrator flow started", 
+        logger.info("Kafka consumer received analysis request for meeting ID: {}, partition: {}, offset: {}", 
                 event.meetingId(), partition, offset);
 
         // processMeeting is @Async, so we join to wait for completion.
@@ -36,6 +37,16 @@ public class MeetingAnalysisConsumer {
         // allowing Kafka's retry and DLT mechanisms to properly detect failures.
         meetingOrchestrator.processMeeting(event.meetingId()).join();
         
-        logger.info("Successfully completed orchestrator flow for meeting {}", event.meetingId());
+        logger.info("Kafka consumer completed processing for meeting ID: {}", event.meetingId());
+    }
+
+    @DltHandler
+    public void handleDlt(
+            MeetingAnalysisRequestedEvent event,
+            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
+            @Header(KafkaHeaders.OFFSET) long offset) {
+        logger.error("Kafka consumer routed failed event to DLT for meeting ID: {}, topic: {}, partition: {}, offset: {}",
+                event.meetingId(), topic, partition, offset);
     }
 }
