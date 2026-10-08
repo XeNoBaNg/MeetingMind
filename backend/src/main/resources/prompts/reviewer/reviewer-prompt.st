@@ -6,6 +6,8 @@ Check for:
 - Date or assignee discrepancies
 Return a verified boolean flag as true if everything aligns properly, or false if there are hallucinations or discrepancies, along with commentary.
 
+IMPORTANT: You MUST return ONLY a raw JSON object matching the requested schema. Do not include any conversational text, explanations, or markdown code blocks (e.g., no ```json). Your entire response must be parseable by a JSON parser.
+
 Raw Transcript:
 {rawTranscript}
 

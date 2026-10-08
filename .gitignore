@@ -1,4 +1,4 @@
-# Environment variables and secrets
+﻿# Environment variables and secrets
 *.env
 *.env.*
 !.env.example
@@ -35,3 +35,5 @@ pnpm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+.mcp-token
+*.log

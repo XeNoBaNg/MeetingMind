@@ -1200,7 +1200,7 @@ testing and failure analysis.
 - Spring WebFlux / MVC integration
 - Real-time meeting processing updates
 
-## Phase 13 — Spring Security
+## Phase 13 — Spring Security (COMPLETED)
 - Authentication
 - Authorization
 - Password hashing
@@ -1208,6 +1208,15 @@ testing and failure analysis.
 - Roles and permissions
 - Securing REST APIs
 - Securing MCP endpoints
+  - Implemented OAuth 2.0 PKCE flow for MCP clients (Claude Desktop).
+  - The `mcp-stdio-server.js` stdio bridge acts as the OAuth client.
+  - Generates PKCE `code_challenge` and `code_verifier`.
+  - Proxies authentication through the React frontend via `/mcp-connect`.
+  - Spring Boot API (`McpAuthController`) associates authorization codes with user accounts and issues long-lived opaque access tokens.
+  - The stdio bridge exchanges the auth code for a token via `/api/mcp/token` using its local `code_verifier`.
+  - The `.mcp-token` is persisted locally to bypass re-authentication across restarts.
+  - Custom `McpAuthenticationFilter` validates opaque tokens in Redis without disrupting stateless JWT sessions.
+  - **Limitation**: Claude Desktop operates synchronously, causing timeouts during the manual authorization flow. The bridge returns a text link to the user and requires them to manually retry the request after completing the authorization loop in the browser.
 
 ## Phase 14 — Observability
 - Structured logging
