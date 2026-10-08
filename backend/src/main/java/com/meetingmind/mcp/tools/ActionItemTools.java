@@ -32,7 +32,7 @@ public class ActionItemTools {
             @ToolParam(description = "Filter by status: OPEN or DONE") String status,
             @ToolParam(description = "Filter by assignee name") String assignee) {
         
-        List<ActionItemResponseDto> all = actionItemService.getAllActionItemsForSystem();
+        List<ActionItemResponseDto> all = actionItemService.getAllActionItems();
         return all.stream()
                 .filter(item -> status == null || status.isBlank() || item.status().name().equalsIgnoreCase(status))
                 .filter(item -> assignee == null || assignee.isBlank() || (item.assignee() != null && item.assignee().equalsIgnoreCase(assignee)))
@@ -42,12 +42,12 @@ public class ActionItemTools {
     @Tool(description = "Updates the status of an action item to completed (DONE).")
     public ActionItemResponseDto mark_action_item_done(
             @ToolParam(description = "The UUID of the action item") String actionItemId) {
-        return actionItemService.updateStatusForSystem(UUID.fromString(actionItemId), ActionItemStatus.DONE);
+        return actionItemService.updateStatus(UUID.fromString(actionItemId), ActionItemStatus.DONE);
     }
 
     @Tool(description = "Aggregates deliverable statistics and counts for a specific person.")
     public WorkloadResponseDto get_person_workload(
             @ToolParam(description = "Name of the individual") String assignee) {
-        return actionItemService.getWorkloadForAssigneeForSystem(assignee);
+        return actionItemService.getWorkloadForAssignee(assignee);
     }
 }

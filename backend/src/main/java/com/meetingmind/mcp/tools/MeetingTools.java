@@ -31,7 +31,7 @@ public class MeetingTools {
             @ToolParam(description = "Maximum items to return") Integer limit) {
         
         int actualLimit = (limit != null && limit > 0) ? limit : 10;
-        return meetingService.getAllMeetingsForSystem().stream()
+        return meetingService.getAllMeetings().stream()
                 .limit(actualLimit)
                 .map(m -> new MeetingSummaryDto(m.getId().toString(), m.getTitle(), m.getCreatedAt().toString(), m.getStatus().name()))
                 .collect(Collectors.toList());
@@ -40,7 +40,7 @@ public class MeetingTools {
     @Tool(description = "Retrieves the executive summary and key decisions for a specific meeting.")
     public com.meetingmind.meeting.dto.MeetingSummaryDto get_meeting_summary(
             @ToolParam(description = "The UUID of the meeting") String meetingId) {
-        Meeting meeting = meetingService.getMeetingForSystem(UUID.fromString(meetingId));
+        Meeting meeting = meetingService.getMeeting(UUID.fromString(meetingId));
         if (meeting.getSummary() == null) throw new IllegalArgumentException("No summary available for this meeting yet.");
         return new com.meetingmind.meeting.dto.MeetingSummaryDto(
             meeting.getSummary().getId(),

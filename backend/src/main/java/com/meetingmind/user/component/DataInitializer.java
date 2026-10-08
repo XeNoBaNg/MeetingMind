@@ -22,17 +22,27 @@ public class DataInitializer {
     @Value("${meetingmind.security.bootstrap-user.password:}")
     private String bootstrapPassword;
 
-    public DataInitializer(UserService userService, UserRepository userRepository) {
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    public DataInitializer(UserService userService, UserRepository userRepository, org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
         this.userService = userService;
         this.userRepository = userRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void initializeData() {
+        try {
+            jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;");
+            System.out.println("Successfully dropped NOT NULL constraint on password_hash");
+        } catch (Exception e) {
+            System.out.println("Constraint already dropped or error: " + e.getMessage());
+        }
+
         if (bootstrapEnabled && bootstrapUsername != null && !bootstrapUsername.isBlank()
                 && bootstrapPassword != null && !bootstrapPassword.isBlank()) {
             if (!userRepository.existsByUsername(bootstrapUsername)) {
-                userService.createUser(bootstrapUsername, bootstrapPassword);
+                userService.createUser(bootstrapUsername, null, bootstrapPassword);
             }
         }
     }

@@ -7,6 +7,12 @@ import { NewMeeting } from './pages/meetings/NewMeeting'
 import { MeetingDetails } from './pages/meetings/MeetingDetails'
 import { SearchPage } from './pages/search/SearchPage'
 import { CalendarPage } from './pages/calendar/CalendarPage'
+import { AuthProvider } from './features/auth/AuthContext'
+import { ProtectedRoute } from './features/auth/components/ProtectedRoute'
+import { LoginPage } from './features/auth/pages/LoginPage'
+import { RegisterPage } from './features/auth/pages/RegisterPage'
+import { OAuthCallback } from './features/auth/pages/OAuthCallback'
+import { McpConnectPage } from './pages/mcp/McpConnectPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,36 +30,54 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/',
-        element: <Dashboard />,
+        element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
       },
       {
         path: '/search',
-        element: <SearchPage />,
+        element: <ProtectedRoute><SearchPage /></ProtectedRoute>,
       },
       {
         path: '/action-items',
-        element: <ActionItems />,
+        element: <ProtectedRoute><ActionItems /></ProtectedRoute>,
       },
       {
         path: '/meetings/new',
-        element: <NewMeeting />,
+        element: <ProtectedRoute><NewMeeting /></ProtectedRoute>,
       },
       {
         path: '/meetings/:id',
-        element: <MeetingDetails />,
+        element: <ProtectedRoute><MeetingDetails /></ProtectedRoute>,
       },
       {
         path: '/calendar',
-        element: <CalendarPage />,
+        element: <ProtectedRoute><CalendarPage /></ProtectedRoute>,
+      },
+      {
+        path: '/mcp-connect',
+        element: <ProtectedRoute><McpConnectPage /></ProtectedRoute>,
       }
     ]
+  },
+  {
+    path: '/login',
+    element: <LoginPage />
+  },
+  {
+    path: '/register',
+    element: <RegisterPage />
+  },
+  {
+    path: '/oauth-callback',
+    element: <OAuthCallback />
   }
 ])
 
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

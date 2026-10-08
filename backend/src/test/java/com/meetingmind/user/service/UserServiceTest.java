@@ -42,7 +42,7 @@ class UserServiceTest {
         savedUser.setPasswordHash("encodedpass");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
-        User result = userService.createUser("newuser", "rawpass");
+        User result = userService.createUser("newuser", null, "rawpass");
 
         assertThat(result.getUsername()).isEqualTo("newuser");
         assertThat(result.getPasswordHash()).isEqualTo("encodedpass");
@@ -60,7 +60,7 @@ class UserServiceTest {
     void createUser_WithExistingUsername_ThrowsException() {
         when(userRepository.existsByUsername("existinguser")).thenReturn(true);
 
-        assertThatThrownBy(() -> userService.createUser("existinguser", "rawpass"))
+        assertThatThrownBy(() -> userService.createUser("existinguser", null, "rawpass"))
                 .isInstanceOf(UserAlreadyExistsException.class)
                 .hasMessageContaining("already exists");
 

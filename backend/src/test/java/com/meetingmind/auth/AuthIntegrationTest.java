@@ -45,6 +45,7 @@ public class AuthIntegrationTest {
     void register_withValidData_shouldSucceed() throws Exception {
         RegisterRequest request = new RegisterRequest();
         request.setUsername("newuser");
+        request.setEmail("newuser@example.com");
         request.setPassword("password123");
 
         mockMvc.perform(post("/api/auth/register")
@@ -71,6 +72,7 @@ public class AuthIntegrationTest {
 
         RegisterRequest request = new RegisterRequest();
         request.setUsername("existinguser");
+        request.setEmail("existinguser@example.com");
         request.setPassword("password123");
 
         mockMvc.perform(post("/api/auth/register")
@@ -78,13 +80,14 @@ public class AuthIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("User with username existinguser already exists."));
+                .andExpect(jsonPath("$.message").value("User with username 'existinguser' already exists."));
     }
 
     @Test
     void register_withBlankUsername_shouldFailValidation() throws Exception {
         RegisterRequest request = new RegisterRequest();
         request.setUsername("");
+        request.setEmail("invaliduser@example.com");
         request.setPassword("password123");
 
         mockMvc.perform(post("/api/auth/register")
