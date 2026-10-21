@@ -29,11 +29,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.argThat;
 
-import org.springframework.test.context.ActiveProfiles;
+import com.meetingmind.testcontainers.BaseIntegrationTest;
 
 @SpringBootTest
-@ActiveProfiles("test")
-public class MeetingPipelineIntegrationTest {
+public class MeetingPipelineIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private MeetingOrchestrator meetingOrchestrator;

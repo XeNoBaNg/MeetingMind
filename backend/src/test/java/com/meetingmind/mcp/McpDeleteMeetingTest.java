@@ -17,15 +17,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.meetingmind.testcontainers.BaseIntegrationTest;
+
 @SpringBootTest
-@ActiveProfiles("test")
-public class McpDeleteMeetingTest {
+public class McpDeleteMeetingTest extends BaseIntegrationTest {
 
     @Autowired
     private MeetingTools meetingTools;

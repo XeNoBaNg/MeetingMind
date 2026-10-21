@@ -9,7 +9,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.UUID;
@@ -19,15 +18,16 @@ import java.util.concurrent.TimeUnit;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.meetingmind.testcontainers.BaseIntegrationTest;
+
 @SpringBootTest
 @EmbeddedKafka(partitions = 1)
 @DirtiesContext
-@ActiveProfiles("test")
 @TestPropertySource(properties = {
     "spring.kafka.listener.auto-startup=true",
     "spring.kafka.consumer.auto-offset-reset=earliest"
 })
-public class MeetingAnalysisKafkaTest {
+public class MeetingAnalysisKafkaTest extends BaseIntegrationTest {
 
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;

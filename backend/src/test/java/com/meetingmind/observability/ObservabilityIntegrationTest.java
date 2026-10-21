@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,9 +31,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import com.meetingmind.testcontainers.BaseIntegrationTest;
+
 @SpringBootTest
-@ActiveProfiles("test")
-public class ObservabilityIntegrationTest {
+public class ObservabilityIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private MeetingOrchestrator meetingOrchestrator;
