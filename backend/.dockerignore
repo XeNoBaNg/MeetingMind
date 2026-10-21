@@ -1,0 +1,12 @@
+target/
+.git/
+.gitignore
+*.log
+mcp-debug.log
+.mcp-token
+.env
+.env.*
+.vscode/
+.idea/
+*.md
+test-*.js
