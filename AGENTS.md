@@ -1251,15 +1251,105 @@ testing and failure analysis.
   - Run Redis cache integration: `.\mvnw.cmd test -Dtest=MeetingCacheIntegrationTest`
   - Run fast unit tests only: `.\mvnw.cmd test -Dtest=*Test,!*IntegrationTest,!*ContainerTest`
 
-## Phase 16 — Docker
-- Backend containerization
-- Frontend containerization
-- Multi-container development
-- Docker Compose
-- Container networking
-- Environment configuration
-- Health checks
-- Image optimization
+## Phase 16 — Docker (COMPLETED)
+- **Multi-Stage Containerization**:
+  - **Backend (`backend/Dockerfile`)**:
+    - Stage 1 (Builder): `eclipse-temurin:17-jdk` builds fat JAR with layer-cached Maven dependencies (`dependency:go-offline`).
+    - Stage 2 (Runtime): `eclipse-temurin:17-jre` with glibc support (ensuring full compatibility with DJL / ONNX Runtime tokenizers and embedding native libraries), runs as non-root user `appuser` (UID 1001).
+    - Container JVM flags: `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom`.
+    - Graceful shutdown enabled via `server.shutdown: graceful` and `spring.lifecycle.timeout-per-shutdown-phase: 20s`.
+    - Built-in container healthcheck targeting `/actuator/health`.
+    - Final image size: 879MB (331MB compressed).
+  - **Frontend (`frontend/Dockerfile` & `frontend/nginx.conf`)**:
+    - Stage 1 (Builder): `node:22-alpine` installs dependencies deterministically (`npm ci`) and compiles TypeScript + Vite bundle (`npm run build`).
+    - Stage 2 (Runtime): `nginx:1.27-alpine` serves static bundle with gzip compression and cache headers.
+    - Reverse proxying for `/api/` (with `proxy_buffering off` for long-running Server-Sent Events / SSE), `/oauth2/`, and `/login/oauth2/`.
+    - SPA HTML5 history routing fallback (`try_files $uri $uri/ /index.html;`).
+    - Security headers (`X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`, `Referrer-Policy`).
+    - Built-in container healthcheck targeting `/healthz`.
+    - Final image size: 74.6MB (21.2MB compressed).
+- **Multi-Container Orchestration (`docker-compose.yml` & `infrastructure/docker/docker-compose.yml`)**:
+  - **PostgreSQL (`pgvector/pgvector:pg16`)**: Native vector extension support for RAG embeddings with persistent volume `postgres_data`.
+  - **Redis (`redis:7-alpine`)**: Distributed cache with persistent volume `redis_data`.
+  - **Kafka (`apache/kafka:3.7.2`)**: KRaft-mode broker configured with **dual listeners**:
+    - `PLAINTEXT://0.0.0.0:9092` advertised as `localhost:9092` for host/local development clients.
+    - `INTERNAL://0.0.0.0:29092` advertised as `kafka:29092` for container-to-container communication.
+  - **Zipkin (`openzipkin/zipkin:3.4`)**: Distributed tracing collector.
+  - **Backend (`meetingmind-backend`)**: Connected to database, cache, broker, and tracing across `meetingmind-network` with health-based startup dependencies (`condition: service_healthy`).
+  - **Frontend (`meetingmind-frontend`)**: Proxies API traffic to backend on port 8080.
+  - **pgAdmin (`dpage/pgadmin4`)**: Kept optional under Docker Compose profile `tools` (`--profile tools`).
+- **Container & Port Configuration**:
+
+| Service | Container Name | Host Port | Container Port | Purpose |
+|---|---|---|---|---|
+| `frontend` | `meetingmind-frontend` | `3000` (or `${FRONTEND_PORT}`) | `80` | Nginx web server & API reverse proxy |
+| `backend` | `meetingmind-backend` | `8080` (or `${BACKEND_PORT}`) | `8080` | Spring Boot REST API & AI pipeline |
+| `postgres` | `meetingmind-postgres` | `5433` (or `${POSTGRES_PORT}`) | `5432` | PostgreSQL 16 with pgvector extension |
+| `redis` | `meetingmind-redis` | `6380` (or `${REDIS_PORT}`) | `6379` | Redis distributed caching & sessions |
+| `kafka` | `meetingmind-kafka` | `9092` (or `${KAFKA_PORT}`) | `9092`, `29092` | Apache Kafka broker (KRaft mode) |
+| `zipkin` | `meetingmind-zipkin` | `9411` (or `${ZIPKIN_PORT}`) | `9411` | OpenZipkin distributed tracing UI |
+| `pgadmin` *(optional)* | `meetingmind-pgadmin` | `5050` (or `${PGADMIN_PORT}`) | `80` | pgAdmin Web UI (Profile: `tools`) |
+
+- **Required Environment Variables (`.env`)**:
+
+| Variable | Description | Default in Compose |
+|---|---|---|
+| `POSTGRES_DB` | PostgreSQL database name | `meetingmind` |
+| `POSTGRES_USER` | PostgreSQL username | `meetingmind` |
+| `POSTGRES_PASSWORD` | PostgreSQL password | `meetingmind` |
+| `REDIS_PASSWORD` | Optional Redis authentication password | *empty* |
+| `KAFKA_PORT` | Host port for external Kafka clients | `9092` |
+| `GROQ_API_KEY` | API key for Grok/xAI OpenAI-compatible LLM | *dummy-key* |
+| `JWT_SECRET` | HMAC-SHA256 signing secret (min 32 chars) | *insecure default for dev* |
+| `GOOGLE_CLIENT_ID` | Google OAuth2 client ID | *dummy* |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth2 client secret | *dummy* |
+| `FRONTEND_URL` | Frontend base URL for OAuth redirection | `http://localhost:3000` |
+| `FRONTEND_PORT` | Host port for frontend web server | `3000` |
+| `BACKEND_PORT` | Host port for Spring Boot backend | `8080` (use `8081` if 8080 is occupied) |
+
+- **Exact Commands**:
+  - Build images:
+    ```bash
+    docker compose build
+    ```
+  - Start entire multi-container stack in background:
+    ```bash
+    docker compose up -d
+    ```
+  - Verify container status and health:
+    ```bash
+    docker compose ps
+    ```
+  - Follow application logs:
+    ```bash
+    docker compose logs -f backend
+    docker compose logs -f frontend
+    ```
+  - Start with optional pgAdmin web console:
+    ```bash
+    docker compose --profile tools up -d
+    ```
+  - Stop stack while **preserving** persistent database, Redis, and Kafka data:
+    ```bash
+    docker compose stop
+    # or
+    docker compose down
+    ```
+  - Restart stack after stopping:
+    ```bash
+    docker compose start
+    # or
+    docker compose up -d
+    ```
+  - **Intentionally reset** all local development databases, caches, and Kafka topics:
+    ```bash
+    docker compose down -v
+    ```
+- **Health Checks & Troubleshooting**:
+  - Backend health check: `curl http://localhost:8080/actuator/health` (returns `{"status":"UP"}`)
+  - Frontend health check: `curl http://localhost:3000/healthz` (returns `OK`)
+  - End-to-end API reachability through Nginx: `curl http://localhost:3000/api/health`
+  - If host port 8080 is already used by a local Spring Boot dev process, set `BACKEND_PORT=8081` in `.env` or run `$env:BACKEND_PORT="8081"; docker compose up -d`. Frontend proxy continues reaching backend seamlessly over internal Docker DNS (`http://backend:8080/api/`).
 
 ## Phase 17 — CI/CD
 - GitHub Actions
