@@ -171,9 +171,16 @@ public class MeetingOrchestrator {
                 try {
                     summary = executeAgent("summarizer", () -> summarizerAgent.summarize(transcript));
                     meetingService.saveSummary(meetingId, summary);
+                } catch (com.meetingmind.common.exception.ResourceNotFoundException e) {
+                    throw e;
                 } catch (Exception e) {
                     logger.error("Summarizer failed critically for meeting ID: {}", meetingId, e);
-                    meetingService.updateStatus(meetingId, MeetingStatus.FAILED);
+                    try {
+                        meetingService.updateStatus(meetingId, MeetingStatus.FAILED);
+                    } catch (com.meetingmind.common.exception.ResourceNotFoundException notFoundEx) {
+                        logger.warn("Meeting {} was deleted during failure handling. Aborting.", meetingId);
+                        return CompletableFuture.completedFuture(null);
+                    }
                     if (meterRegistry != null) {
                         meterRegistry.counter("meetingmind.analysis.requests", "status", "failed").increment();
                     }
@@ -192,6 +199,8 @@ public class MeetingOrchestrator {
                     final MeetingSummary finalSummary = summary;
                     actionItems = executeAgent("extractor", () -> extractorAgent.extract(transcript, finalSummary));
                     meetingService.saveActionItems(meetingId, actionItems);
+                } catch (com.meetingmind.common.exception.ResourceNotFoundException e) {
+                    throw e;
                 } catch (Exception e) {
                     logger.error("Extractor failed for meeting ID: {}", meetingId, e);
                 }
@@ -205,6 +214,8 @@ public class MeetingOrchestrator {
                     final List<ExtractedActionItem> items = actionItems != null ? actionItems.items() : List.of();
                     emailDraft = executeAgent("drafter", () -> drafterAgent.draft(finalSummary, items));
                     meetingService.saveEmailDraft(meetingId, emailDraft);
+                } catch (com.meetingmind.common.exception.ResourceNotFoundException e) {
+                    throw e;
                 } catch (Exception e) {
                     logger.error("Drafter failed for meeting ID: {}", meetingId, e);
                 }
@@ -218,10 +229,17 @@ public class MeetingOrchestrator {
                     final List<ExtractedActionItem> items = actionItems != null ? actionItems.items() : List.of();
                     reviewResult = executeAgent("reviewer", () -> reviewerAgent.review(transcript, items, finalEmailDraft));
                     meetingService.saveReview(meetingId, reviewResult);
+                } catch (com.meetingmind.common.exception.ResourceNotFoundException e) {
+                    throw e;
                 } catch (Exception e) {
                     logger.error("Reviewer failed for meeting ID: {}. Draft preserved.", meetingId, e);
                     reviewResult = new ReviewResult(false, List.of("Reviewer agent failed to complete the review process due to an error."), List.of(), List.of(), "System: Review failed.");
-                    meetingService.saveReview(meetingId, reviewResult);
+                    try {
+                        meetingService.saveReview(meetingId, reviewResult);
+                    } catch (com.meetingmind.common.exception.ResourceNotFoundException notFoundEx) {
+                        logger.warn("Meeting {} was deleted. Skipping saving fallback review.", meetingId);
+                        return CompletableFuture.completedFuture(null);
+                    }
                 }
             }
 
@@ -245,7 +263,17 @@ public class MeetingOrchestrator {
             }
             logger.info("Successfully completed meeting analysis for meeting ID: {}", meetingId);
 
+        } catch (com.meetingmind.common.exception.ResourceNotFoundException e) {
+            logger.warn("Meeting {} was deleted during pipeline execution. Discarding remaining steps.", meetingId);
+            if (meterRegistry != null) {
+                meterRegistry.counter("meetingmind.analysis.requests", "status", "aborted").increment();
+            }
+            return CompletableFuture.completedFuture(null);
         } catch (Exception e) {
+            if (!meetingService.existsById(meetingId)) {
+                logger.warn("Meeting {} was deleted during error handling. Discarding failure status update.", meetingId);
+                return CompletableFuture.completedFuture(null);
+            }
             if (meterRegistry != null) {
                 meterRegistry.counter("meetingmind.analysis.requests", "status", "failed").increment();
             }
@@ -254,7 +282,11 @@ public class MeetingOrchestrator {
                 parentSpan.error(e);
             }
             logger.error("Error processing meeting ID: {}", meetingId, e);
-            meetingService.updateStatus(meetingId, MeetingStatus.FAILED);
+            try {
+                meetingService.updateStatus(meetingId, MeetingStatus.FAILED);
+            } catch (Exception updateEx) {
+                logger.warn("Could not update status to FAILED for meeting {}: {}", meetingId, updateEx.getMessage());
+            }
         } finally {
             if (overallSample != null) {
                 overallSample.stop(Timer.builder("meetingmind.analysis.duration").register(meterRegistry));

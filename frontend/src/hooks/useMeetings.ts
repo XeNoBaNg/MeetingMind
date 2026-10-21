@@ -32,3 +32,14 @@ export function useCreateMeeting() {
     },
   })
 }
+
+export function useDeleteMeeting() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => meetingApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: meetingKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['action-items'] })
+    },
+  })
+}

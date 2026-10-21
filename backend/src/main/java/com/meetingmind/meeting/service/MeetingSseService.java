@@ -88,6 +88,11 @@ public class MeetingSseService {
         }
     }
 
+    @EventListener
+    public void onMeetingDeleted(com.meetingmind.meeting.event.MeetingDeletedEvent event) {
+        completeAll(event.meetingId());
+    }
+
     @Scheduled(fixedRate = 15000) // Send heartbeat every 15 seconds
     public void sendHeartbeats() {
         emitters.forEach((meetingId, meetingEmitters) -> {

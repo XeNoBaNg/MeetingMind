@@ -11,5 +11,8 @@ export const meetingApi = {
   },
   getAll: async (): Promise<ApiResponse<Meeting[]>> => {
     return apiClient.get('/meetings')
+  },
+  delete: async (id: string): Promise<void> => {
+    return apiClient.delete(`/meetings/${id}`)
   }
 }

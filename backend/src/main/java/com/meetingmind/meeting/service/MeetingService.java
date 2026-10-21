@@ -28,6 +28,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
 import com.meetingmind.common.exception.ResourceNotFoundException;
+import com.meetingmind.meeting.event.MeetingDeletedEvent;
 import com.meetingmind.meeting.event.MeetingStatusChangedEvent;
 import com.meetingmind.user.entity.User;
 import java.time.Instant;
@@ -81,9 +82,34 @@ public class MeetingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting not found: " + id));
     }
 
+    @Transactional
+    @CacheEvict(value = "meetings", key = "#id")
+    public void deleteMeeting(UUID id, User user) {
+        Meeting meeting = meetingRepository.findByIdAndOwner(id, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found: " + id));
+
+        eventPublisher.publishEvent(new MeetingDeletedEvent(id, Instant.now()));
+        meetingRepository.delete(meeting);
+    }
+
     // ==========================================
     // Internal System Operations (Trusted Pipeline & MCP)
     // ==========================================
+
+    @Transactional
+    @CacheEvict(value = "meetings", key = "#id")
+    public void deleteMeetingForSystem(UUID id) {
+        Meeting meeting = meetingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found: " + id));
+
+        eventPublisher.publishEvent(new MeetingDeletedEvent(id, Instant.now()));
+        meetingRepository.delete(meeting);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsById(UUID id) {
+        return meetingRepository.existsById(id);
+    }
 
     @Transactional(readOnly = true)
     public Meeting getMeetingForSystem(UUID id) {

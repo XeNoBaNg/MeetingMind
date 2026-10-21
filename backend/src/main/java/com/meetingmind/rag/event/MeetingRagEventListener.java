@@ -37,4 +37,15 @@ public class MeetingRagEventListener {
             // Non-blocking: meeting remains COMPLETED in domain state
         }
     }
+
+    @EventListener
+    public void onMeetingDeleted(com.meetingmind.meeting.event.MeetingDeletedEvent event) {
+        logger.info("Received MeetingDeletedEvent for meeting {}. Deleting RAG chunks...", event.meetingId());
+        try {
+            ragService.deleteMeetingIndex(event.meetingId());
+            logger.info("RAG chunks deleted for meeting {}", event.meetingId());
+        } catch (Exception e) {
+            logger.error("Failed to delete RAG chunks for meeting: {}", event.meetingId(), e);
+        }
+    }
 }

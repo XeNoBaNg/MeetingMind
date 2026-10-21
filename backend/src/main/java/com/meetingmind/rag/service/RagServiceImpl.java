@@ -17,6 +17,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -59,7 +62,11 @@ public class RagServiceImpl implements RagService {
         // Authoritatively derive ownerId from the owning Meeting
         UUID ownerId = null;
         Optional<Meeting> meetingOpt = meetingRepository.findById(meetingId);
-        if (meetingOpt.isPresent() && meetingOpt.get().getOwner() != null) {
+        if (meetingOpt.isEmpty()) {
+            logger.warn("Skipping indexing for meeting {}: meeting no longer exists", meetingId);
+            return;
+        }
+        if (meetingOpt.get().getOwner() != null) {
             ownerId = meetingOpt.get().getOwner().getId();
         }
 
@@ -187,5 +194,20 @@ public class RagServiceImpl implements RagService {
 
         logger.info("Indexed {} completed meetings into vector store", indexedCount);
         return indexedCount;
+    }
+
+    @Override
+    public void deleteMeetingIndex(UUID meetingId) {
+        if (meetingId == null) {
+            return;
+        }
+        try {
+            logger.info("Deleting RAG vector store chunks for meeting {}", meetingId);
+            Filter.Expression filter = new FilterExpressionBuilder().eq("meetingId", meetingId.toString()).build();
+            vectorStore.delete(filter);
+            logger.info("Successfully deleted RAG chunks for meeting {}", meetingId);
+        } catch (Exception e) {
+            logger.error("Failed to delete RAG chunks for meeting {}", meetingId, e);
+        }
     }
 }
