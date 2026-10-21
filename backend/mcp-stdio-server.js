@@ -124,6 +124,41 @@ function httpPatch(reqPath) {
   });
 }
 
+function httpDelete(reqPath) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(reqPath, BASE_URL);
+    const headers = {};
+    if (mcpToken) headers['Authorization'] = `Bearer ${mcpToken}`;
+    
+    const req = http.request(url, { method: 'DELETE', headers }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        logDebug(`httpDelete ${reqPath} returned ${res.statusCode}: ${data}`);
+        if (res.statusCode === 401) {
+          reject(new Error('UNAUTHORIZED'));
+          return;
+        }
+        if (res.statusCode === 204) {
+          resolve({ success: true, message: 'Deleted successfully' });
+          return;
+        }
+        if (res.statusCode === 404) {
+          reject(new Error('Meeting not found or access denied'));
+          return;
+        }
+        try {
+          resolve(JSON.parse(data));
+        } catch {
+          resolve(data);
+        }
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 // --- Tool definitions ---
 const TOOLS = [
   {
@@ -201,6 +236,18 @@ const TOOLS = [
         meetingId: { type: 'string', description: 'The UUID of the meeting' }
       },
       required: ['meetingId']
+    }
+  },
+  {
+    name: 'delete_meeting',
+    description: 'Permanently deletes a meeting and all associated data including summaries, action items, email drafts, reviews, and search embeddings. Requires explicit confirmation.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        meetingId: { type: 'string', description: 'The UUID of the meeting to permanently delete' },
+        confirm: { type: 'boolean', description: 'Explicit confirmation to permanently delete this meeting. Must be true to proceed.' }
+      },
+      required: ['meetingId', 'confirm']
     }
   }
 ];
@@ -359,6 +406,16 @@ async function handleTool(name, args) {
           recipients: meeting.emailDraft.recipientSuggestions,
           body: meeting.emailDraft.body,
           reviewed: meeting.emailDraft.reviewed
+        }, null, 2);
+      }
+      case 'delete_meeting': {
+        if (!args.confirm) {
+          return `Deletion aborted: Confirmation required. Please confirm that you want to permanently delete meeting ${args.meetingId} and all associated summaries, action items, drafts, reviews, and search embeddings by passing confirm=true.`;
+        }
+        await httpDelete(`/api/meetings/${encodeURIComponent(args.meetingId)}`);
+        return JSON.stringify({
+          success: true,
+          message: `Meeting ${args.meetingId} and all associated data were successfully and permanently deleted.`
         }, null, 2);
       }
       default:

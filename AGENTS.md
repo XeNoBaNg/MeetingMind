@@ -617,6 +617,7 @@ Initial planned MCP tools:
 - `list_action_items`
 - `mark_action_item_done`
 - `get_person_workload`
+- `delete_meeting` (Requires explicit confirmation to permanently remove meeting and all associated data)
 
 MCP tools must not contain direct SQL or business logic.
 

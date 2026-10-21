@@ -32,4 +32,9 @@ public interface RagService {
      * Returns the total number of meetings indexed.
      */
     int indexAllCompletedMeetings();
+
+    /**
+     * Deletes all indexed chunks and embeddings for the specified meeting from the vector store.
+     */
+    void deleteMeetingIndex(UUID meetingId);
 }

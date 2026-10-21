@@ -98,6 +98,16 @@ public class MeetingAnalysisController {
         return meetingSseService.subscribe(id);
     }
 
+    @DeleteMapping("/{id}")
+    public org.springframework.http.ResponseEntity<Void> deleteMeeting(
+            @PathVariable UUID id,
+            Authentication authentication
+    ) {
+        User currentUser = userService.getUserByUsername(authentication.getName());
+        meetingService.deleteMeeting(id, currentUser);
+        return org.springframework.http.ResponseEntity.noContent().build();
+    }
+
     private MeetingResponse mapToResponse(Meeting meeting) {
         MeetingResponse response = new MeetingResponse();
         response.setId(meeting.getId());

@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { useMeeting, meetingKeys } from '../../hooks/useMeetings'
-import { CheckCircle2, Circle, AlertCircle, Copy, Mail, ListTodo, FileText, Activity } from 'lucide-react'
+import { useMeeting, useDeleteMeeting, meetingKeys } from '../../hooks/useMeetings'
+import { CheckCircle2, Circle, AlertCircle, Copy, Mail, ListTodo, FileText, Activity, Trash2, Loader2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 
 const PIPELINE_STAGES = [
@@ -16,7 +16,10 @@ const PIPELINE_STAGES = [
 
 export function MeetingDetails() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const { data, isLoading, error } = useMeeting(id!)
+  const deleteMutation = useDeleteMeeting()
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const queryClient = useQueryClient()
   const sseConnected = useRef(false)
 
@@ -89,11 +92,21 @@ export function MeetingDetails() {
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{meeting.title}</h1>
-        <div className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-          Analyzed on {new Date(meeting.createdAt).toLocaleString()}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{meeting.title}</h1>
+          <div className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+            Analyzed on {new Date(meeting.createdAt).toLocaleString()}
+          </div>
         </div>
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          className="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-900/60 rounded-lg transition-colors self-start sm:self-center shadow-sm cursor-pointer"
+          title="Delete meeting"
+        >
+          <Trash2 className="w-4 h-4" />
+          <span>Delete Meeting</span>
+        </button>
       </div>
 
       {/* Progress Stepper */}
@@ -319,6 +332,88 @@ export function MeetingDetails() {
 
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/50 border border-red-200 dark:border-red-900/50 flex items-center justify-center flex-shrink-0 text-red-600 dark:text-red-400">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Permanently delete meeting?
+                </h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Are you sure you want to delete <span className="font-semibold text-slate-900 dark:text-slate-200">"{meeting.title}"</span>?
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-red-50/60 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 rounded-xl p-4 text-xs text-red-700 dark:text-red-300 space-y-2">
+              <p className="font-semibold text-red-800 dark:text-red-200">
+                Warning: This action is permanent and cannot be undone.
+              </p>
+              <p>Deleting this meeting will permanently erase:</p>
+              <ul className="list-disc list-inside space-y-1 ml-1">
+                <li>Executive summary and key decisions</li>
+                <li>Extracted action items and task statuses</li>
+                <li>Follow-up email drafts</li>
+                <li>AI reviewer audit results and discrepancy findings</li>
+                <li>Historical RAG chunks and semantic search embeddings</li>
+              </ul>
+            </div>
+
+            {deleteMutation.isError && (
+              <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-sm text-red-600 dark:text-red-400 rounded-lg">
+                {(deleteMutation.error as any)?.response?.data?.message || deleteMutation.error?.message || 'Failed to delete meeting. Please try again.'}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  deleteMutation.reset()
+                }}
+                disabled={deleteMutation.isPending}
+                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!id) return
+                  deleteMutation.mutate(id, {
+                    onSuccess: () => {
+                      setShowDeleteModal(false)
+                      navigate('/')
+                    }
+                  })
+                }}
+                disabled={deleteMutation.isPending}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 rounded-lg shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {deleteMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Delete Meeting</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
