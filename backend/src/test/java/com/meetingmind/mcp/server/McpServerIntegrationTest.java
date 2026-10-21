@@ -9,11 +9,10 @@ import io.modelcontextprotocol.server.McpSyncServer;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.springframework.test.context.ActiveProfiles;
+import com.meetingmind.testcontainers.BaseIntegrationTest;
 
 @SpringBootTest
-@ActiveProfiles("test")
-public class McpServerIntegrationTest {
+public class McpServerIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private ApplicationContext applicationContext;

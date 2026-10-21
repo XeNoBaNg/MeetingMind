@@ -27,11 +27,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.springframework.test.context.ActiveProfiles;
+import com.meetingmind.testcontainers.BaseIntegrationTest;
 
 @SpringBootTest
-@ActiveProfiles("test")
-public class MeetingCacheIntegrationTest {
+public class MeetingCacheIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private MeetingService meetingService;

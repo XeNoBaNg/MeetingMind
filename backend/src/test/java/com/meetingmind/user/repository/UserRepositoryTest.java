@@ -9,13 +9,13 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+
+import com.meetingmind.testcontainers.BaseIntegrationTest;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ActiveProfiles("test")
-class UserRepositoryTest {
+class UserRepositoryTest extends BaseIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;

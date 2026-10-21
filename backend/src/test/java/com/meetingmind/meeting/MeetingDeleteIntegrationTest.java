@@ -37,7 +37,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -48,10 +47,11 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.meetingmind.testcontainers.BaseIntegrationTest;
+
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
-public class MeetingDeleteIntegrationTest {
+public class MeetingDeleteIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;

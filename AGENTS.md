@@ -1229,12 +1229,27 @@ testing and failure analysis.
 - Correlation IDs
 - Health checks
 
-## Phase 15 — Testcontainers
-- PostgreSQL Testcontainer
-- Redis Testcontainer
-- Kafka Testcontainer
-- Integration testing against real infrastructure
-- Replace excessive mocking where appropriate
+## Phase 15 — Testcontainers (COMPLETED)
+- PostgreSQL Testcontainer (`pgvector/pgvector:pg16` with native vector extension)
+- Redis Testcontainer (`redis:7-alpine`)
+- Kafka Testcontainer (`confluentinc/cp-kafka:7.5.0`)
+- Singleton Container Pattern (`BaseIntegrationTest` and `BaseKafkaIntegrationTest`):
+  - Statically initializes shared containers once per test suite execution to minimize startup overhead.
+  - `@DynamicPropertySource` dynamically binds ephemeral container ports to `spring.datasource.url`, `spring.data.redis.*`, and `spring.kafka.bootstrap-servers`, eliminating port conflicts with local dev environments.
+  - Ryuk resource reaper (`testcontainers/ryuk:0.11.0`) guarantees automatic container teardown upon JVM exit.
+- Docker Engine Compatibility:
+  - Supports Docker Desktop Engine v29+ on Windows by negotiating `api.version=1.44` via `docker-java.properties` and Testcontainers 1.20.4.
+- Integration Testing against Real Infrastructure:
+  - Real database persistence (`UserRepositoryTest`, `MeetingDeleteIntegrationTest`, `MeetingOwnershipIntegrationTest`, etc.).
+  - Real Redis caching (`MeetingCacheIntegrationTest`, `ObservabilityIntegrationTest`).
+  - Real Kafka event processing, asynchronous consumption, retry topic handling, and DLT routing (`MeetingAnalysisKafkaContainerTest`).
+- Fast unit tests remained isolated and container-free (`JwtServiceTest`, `UserServiceTest`, `TranscriptChunkerTest`, `McpCalendarServiceImplTest`, etc.).
+- Testing Commands:
+  - Run entire test suite: `.\mvnw.cmd test`
+  - Run Testcontainers connectivity check: `.\mvnw.cmd test -Dtest=TestcontainersConnectivityTest`
+  - Run Kafka container integration: `.\mvnw.cmd test -Dtest=MeetingAnalysisKafkaContainerTest`
+  - Run Redis cache integration: `.\mvnw.cmd test -Dtest=MeetingCacheIntegrationTest`
+  - Run fast unit tests only: `.\mvnw.cmd test -Dtest=*Test,!*IntegrationTest,!*ContainerTest`
 
 ## Phase 16 — Docker
 - Backend containerization

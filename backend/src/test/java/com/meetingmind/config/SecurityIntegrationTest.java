@@ -10,7 +10,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -23,10 +22,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.meetingmind.testcontainers.BaseIntegrationTest;
+
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
-class SecurityIntegrationTest {
+class SecurityIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
