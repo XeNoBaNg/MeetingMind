@@ -1,0 +1,142 @@
+name: MeetingMind CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Automatically cancel in-progress runs when new commits are pushed to the same branch or PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Restrict default runner token permissions to least privilege (read-only)
+permissions:
+  contents: read
+
+jobs:
+  # ============================================================================
+  # 1. Backend Build, Unit Tests & Testcontainers Integration Tests
+  # ============================================================================
+  backend:
+    name: Backend Build & Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Java 17 (Temurin)
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+          cache-dependency-path: 'backend/pom.xml'
+
+      - name: Ensure Maven wrapper is executable
+        run: chmod +x backend/mvnw
+
+      - name: Inspect Docker Environment for Testcontainers
+        run: |
+          docker version
+          docker info --format '{{json .ServerVersion}}'
+
+      - name: Run Backend Test Suite (Unit & Testcontainers Integration Tests)
+        working-directory: backend
+        env:
+          # Only dummy JWT secret provided for testing profile context bootstrap
+          JWT_SECRET: "ci-insecure-test-jwt-secret-min-256-bits-long!!"
+          MAVEN_OPTS: "-Xmx2048m"
+        run: ./mvnw clean test -B
+
+      - name: Publish Test Reports
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        if: always()
+        with:
+          name: surefire-test-reports
+          path: backend/target/surefire-reports/
+          retention-days: 7
+
+  # ============================================================================
+  # 2. Frontend Dependencies, Linting & Production Build
+  # ============================================================================
+  frontend:
+    name: Frontend Build & Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Clean install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint source files
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Compile TypeScript & build production bundle
+        working-directory: frontend
+        run: npm run build
+
+  # ============================================================================
+  # 3. Docker Compose Validation & Container Image Builds
+  # Runs only after both backend and frontend jobs have passed successfully
+  # ============================================================================
+  docker:
+    name: Docker Build & Validation
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Validate Root Docker Compose Configuration
+        run: docker compose config --quiet
+
+      - name: Validate Infrastructure Docker Compose Configuration
+        run: docker compose -f infrastructure/docker/docker-compose.yml config --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Build Backend Docker Image
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: meetingmind-backend:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Frontend Docker Image
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: meetingmind-frontend:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify Built Images Exist Locally
+        run: |
+          docker image ls meetingmind-*
+
