@@ -1351,15 +1351,119 @@ testing and failure analysis.
   - End-to-end API reachability through Nginx: `curl http://localhost:3000/api/health`
   - If host port 8080 is already used by a local Spring Boot dev process, set `BACKEND_PORT=8081` in `.env` or run `$env:BACKEND_PORT="8081"; docker compose up -d`. Frontend proxy continues reaching backend seamlessly over internal Docker DNS (`http://backend:8080/api/`).
 
-## Phase 17 — CI/CD
-- GitHub Actions
-- Build automation
-- Automated tests
-- Docker image builds
-- Artifact management
-- Deployment pipelines
-- Environment separation
-- Secrets management
+## Phase 17 — CI/CD (COMPLETED)
+- **CI/CD Pipeline Architecture**:
+  ```text
+                 GitHub Push / Pull Request (main)
+                                |
+                                v
+                    GitHub Actions Runner (ubuntu-latest)
+                                |
+                 +--------------+--------------+
+                 |                             |
+                 v                             v
+         [Job: backend]                 [Job: frontend]
+      - Java 17 (Temurin)            - Node.js 22
+      - Maven Cache (~/.m2)          - npm Cache (~/.npm)
+      - chmod +x ./mvnw              - npm ci
+      - Compile application          - npm run lint (oxlint)
+      - Run Unit Tests               - npm run build (tsc + vite)
+      - Run Testcontainers Tests                   |
+        (Postgres, Redis, Kafka)                   |
+      - Upload Surefire Reports                    |
+        (on failure or success)                    |
+                 |                                 |
+                 +--------------+------------------+
+                                |
+                                v (needs: [backend, frontend])
+                         [Job: docker]
+                 - Set up Docker Buildx (gha cache)
+                 - Validate docker-compose.yml config
+                 - Validate infrastructure/docker compose
+                 - Build backend image (meetingmind-backend:ci)
+                 - Build frontend image (meetingmind-frontend:ci)
+                                |
+                                v
+                          CI Workflow Pass
+  ```
+
+- **Workflow File**: `.github/workflows/ci.yml`
+- **Workflow Triggers**:
+  - `push` to `main`
+  - `pull_request` targeting `main`
+  - Automatic concurrency control (`concurrency: group: ${{ github.workflow }}-${{ github.ref }}, cancel-in-progress: true`) cancels redundant queued/running runs on new commits.
+- **Security & Hardening**:
+  - **Least Privilege**: Global `permissions: contents: read` restricts GitHub token access to read-only.
+  - **Immutable Pinning**: Pinned to verified immutable commit SHAs with readable version tags:
+    - `actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683` (# v4.2.2)
+    - `actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12` (# v4.7.0)
+    - `actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a` (# v4.2.0)
+    - `actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1` (# v4.6.1)
+    - `docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2` (# v3.10.0)
+    - `docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4` (# v6.15.0)
+  - **Zero Production Secrets in CI**: No GitHub repository secrets or API keys are required for pull-request CI. Insecure dummy JWT secret injected only for testing profile bootstrap (`JWT_SECRET="ci-insecure-test-jwt-secret-min-256-bits-long!!"`). External AI and OAuth services are not invoked in CI.
+  - **Executable Bit**: `backend/mvnw` git filemode explicitly set to `100755` (`git update-index --chmod=+x backend/mvnw`).
+- **Job Breakdown & Responsibilities**:
+  1. `backend` (`runs-on: ubuntu-latest`, timeout: 20m):
+     - Sets up JDK 17 with Temurin distribution and Maven dependency cache.
+     - Inspects host Docker daemon status (`docker version`).
+     - Executes full backend test suite (`./mvnw clean test -B`) covering all isolated unit tests and Testcontainers integration tests.
+     - Uploads Surefire test reports (`backend/target/surefire-reports/`) as a workflow artifact named `surefire-test-reports` with a 7-day retention period on `if: always()`.
+  2. `frontend` (`runs-on: ubuntu-latest`, timeout: 15m):
+     - Sets up Node.js 22 with npm cache targeting `frontend/package-lock.json`.
+     - Deterministically installs dependencies (`npm ci`).
+     - Runs static code analysis and linting (`npm run lint` via `oxlint`).
+     - Executes strict TypeScript compilation and production bundling (`npm run build` via `tsc -b && vite build`).
+  3. `docker` (`runs-on: ubuntu-latest`, timeout: 20m, `needs: [backend, frontend]`):
+     - Validates root `docker-compose.yml` (`docker compose config --quiet`).
+     - Validates `infrastructure/docker/docker-compose.yml` (`docker compose -f infrastructure/docker/docker-compose.yml config --quiet`).
+     - Sets up Docker Buildx with GitHub Actions layer caching (`type=gha`).
+     - Builds backend Docker image (`meetingmind-backend:ci`) with `load: true` and `push: false`.
+     - Builds frontend Docker image (`meetingmind-frontend:ci`) with `load: true` and `push: false`.
+     - Verifies locally loaded images via `docker image ls meetingmind-*`.
+- **Testcontainers in CI**:
+  - Runs natively on GitHub-hosted `ubuntu-latest` runners where Docker Engine is pre-installed and listening on `/var/run/docker.sock`.
+  - Statically initializes singleton containers (`BaseIntegrationTest` for PostgreSQL + Redis, `BaseKafkaIntegrationTest` for Kafka).
+  - Uses dynamic property injection (`@DynamicPropertySource`) to bind ephemeral container ports without localhost port conflicts.
+  - Automatic teardown and container lifecycle cleanup guaranteed by Testcontainers Ryuk reaper.
+- **Inspecting Failed Workflow Runs**:
+  - Go to the **Actions** tab on GitHub: `https://github.com/<owner>/MeetingMind/actions`.
+  - Select the specific workflow run.
+  - Click on the failed job (`backend`, `frontend`, or `docker`) to expand step logs and view failure stack traces.
+  - In the workflow run summary page, scroll to **Artifacts** and download `surefire-test-reports.zip` to review individual XML/TXT test result details.
+- **Reproducing CI Checks Locally**:
+  - Run frontend lint:
+    ```bash
+    cd frontend && npm run lint
+    ```
+  - Run frontend production build:
+    ```bash
+    cd frontend && npm run build
+    ```
+  - Run isolated backend unit tests:
+    ```powershell
+    cd backend
+    .\mvnw.cmd test "-Dtest=JwtServiceTest,UserServiceTest,TranscriptChunkerTest,McpCalendarServiceImplTest,MeetingSseServiceTest"
+    ```
+  - Run full backend test suite with Testcontainers (requires local Docker daemon running):
+    ```powershell
+    cd backend
+    .\mvnw.cmd test
+    ```
+  - Validate Docker Compose configurations:
+    ```bash
+    docker compose config
+    docker compose -f infrastructure/docker/docker-compose.yml config
+    ```
+  - Build container images locally (requires local Docker daemon running):
+    ```bash
+    docker build -t meetingmind-backend:ci ./backend
+    docker build -t meetingmind-frontend:ci ./frontend
+    ```
+- **Adding New Tests to Pipeline**:
+  - **Unit Tests**: Place test class in `backend/src/test/java/...` ending with `Test.java`. Automatically picked up by Surefire.
+  - **Integration Tests**: Extend `BaseIntegrationTest` (for PostgreSQL/Redis) or `BaseKafkaIntegrationTest` (for Kafka). Automatically discovered and executed in CI against real Testcontainers.
+  - **Frontend Tests**: Add test scripts to `frontend/package.json` under `"test"`.
 
 ## Phase 18 — AWS
 ### EC2

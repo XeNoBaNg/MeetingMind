@@ -22,6 +22,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -38,11 +39,12 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.meetingmind.testcontainers.BaseIntegrationTest;
+import com.meetingmind.testcontainers.BaseKafkaIntegrationTest;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class MeetingOwnershipIntegrationTest extends BaseIntegrationTest {
+@DirtiesContext
+public class MeetingOwnershipIntegrationTest extends BaseKafkaIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
