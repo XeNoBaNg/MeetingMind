@@ -38,11 +38,11 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.meetingmind.testcontainers.BaseIntegrationTest;
+import com.meetingmind.testcontainers.BaseKafkaIntegrationTest;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class MeetingOwnershipIntegrationTest extends BaseIntegrationTest {
+public class MeetingOwnershipIntegrationTest extends BaseKafkaIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
