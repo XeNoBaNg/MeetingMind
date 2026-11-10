@@ -3,6 +3,7 @@
 *.env
 *.env.*
 !.env.example
+.deploy.lock
 
 # Java / Maven / Gradle
 target/

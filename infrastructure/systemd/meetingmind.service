@@ -1,0 +1,47 @@
+[Unit]
+Description=MeetingMind Production Application Stack
+Documentation=https://github.com/XeNoBaNg/MeetingMind
+Requires=docker.service
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=ssm-user
+Group=ssm-user
+SupplementaryGroups=docker
+WorkingDirectory=/home/ssm-user/meetingmind
+
+# Execution environment
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Environment="AWS_REGION=us-east-1"
+Environment="AWS_DEFAULT_REGION=us-east-1"
+
+# 1. Preflight: Retrieve latest production secrets from AWS SSM Parameter Store
+ExecStartPre=/home/ssm-user/meetingmind/scripts/fetch-secrets.sh
+
+# 2. Preflight: Validate release configuration file and 40-character git commit SHA format
+ExecStartPre=/bin/bash -c 'test -f /home/ssm-user/meetingmind/.release.env && grep -Eq "^IMAGE_TAG=[0-9a-f]{40}$" /home/ssm-user/meetingmind/.release.env'
+
+# 3. Preflight: Renew Amazon ECR token with strict pipefail propagation (masked from logs)
+ExecStartPre=/bin/bash -o pipefail -c 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 038462793348.dkr.ecr.us-east-1.amazonaws.com'
+
+# 4. Preflight: Pull target release images using explicit project name
+ExecStartPre=/usr/bin/docker compose --project-name meetingmind-prod --env-file .env.prod --env-file .release.env -f docker-compose.prod.yml pull backend frontend
+
+# 5. Initial Host Boot / Start: Launch stack and block until all container healthchecks pass
+ExecStart=/usr/bin/docker compose --project-name meetingmind-prod --env-file .env.prod --env-file .release.env -f docker-compose.prod.yml up -d --wait --remove-orphans
+
+# 6. Routine Release Reload: Recreate changed containers while preserving unchanged stateful services (Postgres, Redis, Kafka)
+ExecReload=/usr/bin/docker compose --project-name meetingmind-prod --env-file .env.prod --env-file .release.env -f docker-compose.prod.yml up -d --wait --remove-orphans
+
+# 7. Clean Host Shutdown: Send SIGTERM and preserve named volumes and stopped containers
+ExecStop=/usr/bin/docker compose --project-name meetingmind-prod --env-file .env.prod --env-file .release.env -f docker-compose.prod.yml stop --timeout 50
+
+# Allow sufficient time for healthcheck convergence and graceful shutdown
+TimeoutStartSec=300
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target
