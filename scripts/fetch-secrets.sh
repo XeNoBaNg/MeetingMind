@@ -77,6 +77,8 @@ EXPECTED_FULL_PATHS = {
     "/meetingmind/prod/BOOTSTRAP_USER_ENABLED",
     "/meetingmind/prod/FRONTEND_URL",
     "/meetingmind/prod/GROQ_API_KEY",
+    "/meetingmind/prod/GOOGLE_CLIENT_ID",
+    "/meetingmind/prod/GOOGLE_CLIENT_SECRET",
     "/meetingmind/prod/JWT_SECRET",
     "/meetingmind/prod/POSTGRES_DB",
     "/meetingmind/prod/POSTGRES_PASSWORD",
@@ -169,8 +171,6 @@ try:
             ("FRONTEND_PORT", "80"),
             ("MEETINGMIND_SECURITY_BOOTSTRAP_USER_ENABLED", "false"),
             ("MANAGEMENT_TRACING_ENABLED", "false"),
-            ("GOOGLE_CLIENT_ID", "dummy"),
-            ("GOOGLE_CLIENT_SECRET", "dummy"),
         ]
         for k, v in overrides:
             f.write(f"{k}={v}\n")
@@ -184,7 +184,7 @@ try:
 
     # Atomic rename on the same filesystem (preserves mode 0600 from mkstemp)
     os.replace(temp_path, target_file)
-    print("VALIDATION SUCCESS: Exactly 7 SSM parameters and 5 verified overrides written atomically.")
+    print("VALIDATION SUCCESS: Exactly 9 SSM parameters and 5 verified overrides written atomically.")
 
 except Exception as err:
     if os.path.exists(temp_path):
