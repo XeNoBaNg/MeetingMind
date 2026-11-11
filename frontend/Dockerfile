@@ -25,7 +25,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy production assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 80 443
 
 # Healthcheck verifying Nginx availability
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \
