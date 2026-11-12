@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { apiClient } from '../../../api/client'
+import { BrainCircuit, Loader2, AlertCircle } from 'lucide-react'
+import { GlassCard } from '../../../components/common/GlassCard'
+import { Button } from '../../../components/common/Button'
 
 export function OAuthCallback() {
   const [error, setError] = useState('')
@@ -30,7 +33,7 @@ export function OAuthCallback() {
         const response = await apiClient.post('/auth/oauth-exchange', { code })
         const data = response as any
         login({ id: data.id, username: data.username }, data.token)
-        
+
         const storedRedirect = sessionStorage.getItem('oauth_redirect')
         if (storedRedirect) {
           sessionStorage.removeItem('oauth_redirect')
@@ -40,6 +43,7 @@ export function OAuthCallback() {
           navigate('/')
         }
       } catch (err) {
+        console.error('OAuth error', err)
         setError('Failed to authenticate with Google. The link may have expired.')
       }
     }
@@ -49,32 +53,37 @@ export function OAuthCallback() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 dark:bg-slate-900">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center">
-            <h2 className="text-xl font-medium text-red-600 dark:text-red-400 mb-4">Authentication Error</h2>
-            <p className="text-slate-600 dark:text-slate-300 mb-6">{error}</p>
-            <button
-              onClick={() => navigate('/login')}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-            >
-              Return to Login
-            </button>
+      <div className="min-h-screen flex items-center justify-center bg-[#060d17] p-4 relative">
+        <div className="ambient-glow" />
+        <GlassCard padding="lg" className="max-w-md w-full border-rose-500/30 text-center space-y-4 relative z-10">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto">
+            <AlertCircle className="w-6 h-6" />
           </div>
-        </div>
+          <h2 className="text-xl font-bold text-white">Authentication Error</h2>
+          <p className="text-xs text-slate-300">{error}</p>
+          <Button variant="secondary" className="w-full" onClick={() => navigate('/login')}>
+            Return to Login
+          </Button>
+        </GlassCard>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 dark:bg-slate-900">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <h2 className="mt-6 text-xl font-medium text-slate-900 dark:text-white">
-          Authenticating...
-        </h2>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          Please wait while we complete your sign in.
+    <div className="min-h-screen flex items-center justify-center bg-[#060d17] p-4 relative">
+      <div className="ambient-glow" />
+      <div className="text-center space-y-4 relative z-10">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 mx-auto shadow-lg shadow-cyan-500/30">
+          <div className="w-full h-full bg-[#07111e] rounded-[14px] flex items-center justify-center">
+            <BrainCircuit className="w-7 h-7 text-cyan-400" />
+          </div>
+        </div>
+        <div className="flex items-center justify-center gap-2 text-white font-semibold">
+          <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
+          <span>Completing Authentication...</span>
+        </div>
+        <p className="text-xs text-slate-400">
+          Verifying Google OAuth token with backend security filter chain...
         </p>
       </div>
     </div>

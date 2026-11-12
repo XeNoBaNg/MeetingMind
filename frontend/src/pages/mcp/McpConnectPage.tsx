@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { apiClient } from '../../api/client'
 import { useAuth } from '../../features/auth/AuthContext'
-import { Loader2, ShieldCheck, Server, AlertTriangle } from 'lucide-react'
+import { ShieldCheck, AlertTriangle, ArrowRight, BrainCircuit } from 'lucide-react'
+import { GlassCard } from '../../components/common/GlassCard'
+import { Button } from '../../components/common/Button'
 
 export function McpConnectPage() {
   const [searchParams] = useSearchParams()
@@ -55,79 +57,97 @@ export function McpConnectPage() {
 
   if (!clientId || !redirectUri) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-red-200 dark:border-red-900 p-8 text-center">
-          <AlertTriangle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Invalid Request</h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Missing required authorization parameters (client_id, redirect_uri).
+      <div className="min-h-screen flex items-center justify-center bg-[#060d17] p-4">
+        <GlassCard className="max-w-md w-full border-rose-500/30 text-center p-8 space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-white">Invalid Authorization Request</h2>
+          <p className="text-xs text-slate-400">
+            Missing required OAuth 2.0 PKCE parameters (client_id, redirect_uri, or code_challenge).
           </p>
-        </div>
+        </GlassCard>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
-        <div className="text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-            <Server className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+    <div className="min-h-screen flex items-center justify-center bg-[#060d17] p-4 relative">
+      <div className="ambient-glow" />
+
+      <div className="relative z-10 w-full max-w-md">
+        <GlassCard padding="lg" className="space-y-6 border-cyan-500/30 shadow-2xl shadow-cyan-950/40">
+          {/* Logo & Header */}
+          <div className="text-center space-y-2">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 mx-auto shadow-lg shadow-cyan-500/30">
+              <div className="w-full h-full bg-[#07111e] rounded-[14px] flex items-center justify-center">
+                <BrainCircuit className="w-7 h-7 text-cyan-400" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-extrabold text-white tracking-tight">
+              Connect to MeetingMind
+            </h2>
+            <p className="text-xs text-slate-400">
+              The application <span className="font-semibold text-cyan-300 font-mono">{clientId}</span> is requesting access to your meeting intelligence data.
+            </p>
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
-            Connect an App
-          </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            The application <span className="font-semibold text-gray-900 dark:text-gray-200">{clientId}</span> is requesting access to your MeetingMind account.
-          </p>
-        </div>
 
-        <div className="bg-gray-50 dark:bg-gray-750 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-medium text-gray-900 dark:text-white flex items-center mb-3">
-            <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
-            This app would like to:
-          </h3>
-          <ul className="list-disc pl-5 text-sm text-gray-600 dark:text-gray-400 space-y-2">
-            <li>Access and summarize your meetings</li>
-            <li>Read and update your action items</li>
-            <li>Analyze your meeting workload</li>
-            <li>Draft follow-up emails on your behalf</li>
-          </ul>
-        </div>
-
-        <div className="text-sm text-gray-500 dark:text-gray-400 text-center">
-          Signed in as <span className="font-medium text-gray-900 dark:text-gray-200">{user?.email || user?.username}</span>
-        </div>
-
-        {error && (
-          <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-4 border border-red-200 dark:border-red-800">
-            <p className="text-sm font-medium text-red-800 dark:text-red-300">{error}</p>
+          {/* Scopes Box */}
+          <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Requested Permissions</span>
+            </h3>
+            <ul className="text-xs text-slate-300 space-y-2">
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <span>Read & summarize your meeting transcripts</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <span>Extract, view, and mark action items as done</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <span>Analyze team workload distribution</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <span>Retrieve follow-up drafts and decision records</span>
+              </li>
+            </ul>
           </div>
-        )}
 
-        <div className="flex gap-4 mt-8">
-          <button
-            onClick={handleDeny}
-            disabled={isAuthorizing}
-            className="w-full flex justify-center py-2.5 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleAuthorize}
-            disabled={isAuthorizing}
-            className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {isAuthorizing ? (
-              <>
-                <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                Connecting...
-              </>
-            ) : (
-              'Allow Access'
-            )}
-          </button>
-        </div>
+          <div className="text-center text-xs text-slate-400">
+            Authorizing as <span className="font-bold text-white">{user?.email || user?.username}</span>
+          </div>
+
+          {error && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+              {error}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <Button
+              variant="secondary"
+              onClick={handleDeny}
+              disabled={isAuthorizing}
+            >
+              Deny
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleAuthorize}
+              loading={isAuthorizing}
+              icon={ArrowRight}
+              iconPosition="right"
+            >
+              Allow Access
+            </Button>
+          </div>
+        </GlassCard>
       </div>
     </div>
   )
