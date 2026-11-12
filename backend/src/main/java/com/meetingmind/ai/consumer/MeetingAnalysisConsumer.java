@@ -23,7 +23,7 @@ public class MeetingAnalysisConsumer {
     }
 
     @RetryableTopic(attempts = "3", dltTopicSuffix = "-dlt")
-    @KafkaListener(topics = "meeting-analysis-requests", groupId = "meetingmind-analysis-group")
+    @KafkaListener(topics = "meeting-analysis-requests", groupId = "${spring.kafka.consumer.group-id:meetingmind-analysis-group}")
     public void consumeMeetingAnalysisRequest(
             MeetingAnalysisRequestedEvent event,
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
