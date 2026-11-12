@@ -6,10 +6,11 @@ on:
   pull_request:
     branches: [ main ]
 
-# Automatically cancel in-progress runs when new commits are pushed to the same branch or PR
+# Automatically cancel in-progress runs on pull requests when new commits are pushed.
+# On main, cancel-in-progress is disabled so in-flight CI/CD pipelines are not cancelled abruptly.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # Restrict default runner token permissions to least privilege (read-only)
 permissions:
@@ -178,4 +179,243 @@ jobs:
           echo "- 038462793348.dkr.ecr.us-east-1.amazonaws.com/meetingmind-backend:latest"
           echo "- 038462793348.dkr.ecr.us-east-1.amazonaws.com/meetingmind-frontend:${{ github.sha }}"
           echo "- 038462793348.dkr.ecr.us-east-1.amazonaws.com/meetingmind-frontend:latest"
+
+  # ============================================================================
+  # 4. Production Continuous Deployment (CD) via AWS Systems Manager
+  # Executes only on push to main after successful Docker builds & ECR publish
+  # ============================================================================
+  deploy:
+    name: Production Deployment (EC2)
+    runs-on: ubuntu-latest
+    needs: [docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    timeout-minutes: 25
+
+    # Serialize production deployments: only one deployment job runs at a time.
+    # cancel-in-progress is false so an active deployment is never abruptly cancelled.
+    # Note: GitHub Actions does not guarantee FIFO order for pending concurrency runs;
+    # newer pending runs can replace older pending runs. The freshness check step below
+    # protects against deploying stale or superseded commits.
+    concurrency:
+      group: meetingmind-production-deploy
+      cancel-in-progress: false
+
+    # Least-privilege permissions: read repo contents and request OIDC token
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check Commit Freshness (Stale Deployment Protection)
+        id: freshness
+        run: |
+          set -euo pipefail
+
+          # Query current remote main branch HEAD to prevent deploying outdated commits
+          LS_REMOTE_OUT=""
+          LS_REMOTE_EXIT=0
+          LS_REMOTE_OUT=$(git ls-remote origin refs/heads/main 2>&1) || LS_REMOTE_EXIT=$?
+
+          if [ ${LS_REMOTE_EXIT} -ne 0 ]; then
+            echo "ERROR: 'git ls-remote origin refs/heads/main' failed with exit code ${LS_REMOTE_EXIT}:" >&2
+            echo "${LS_REMOTE_OUT}" >&2
+            echo "Unable to verify latest origin/main commit SHA. Failing closed." >&2
+            exit 1
+          fi
+
+          LATEST_MAIN_SHA=$(echo "${LS_REMOTE_OUT}" | awk '{print $1}')
+          echo "Current workflow commit SHA:   ${GITHUB_SHA}"
+          echo "Latest origin/main commit SHA: ${LATEST_MAIN_SHA}"
+
+          # Fail-closed validation: ensure LATEST_MAIN_SHA is exactly 40 lowercase hexadecimal characters
+          if ! [[ "${LATEST_MAIN_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "ERROR: Unable to resolve a valid 40-character commit SHA for origin/main (received: '${LATEST_MAIN_SHA}'). Failing closed." >&2
+            exit 1
+          fi
+
+          if [ "${GITHUB_SHA}" != "${LATEST_MAIN_SHA}" ]; then
+            echo "::notice ::Commit ${GITHUB_SHA} is superseded by newer commit ${LATEST_MAIN_SHA} on main. Skipping deployment."
+            echo "skip_deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Commit is fresh. Proceeding with deployment."
+            echo "skip_deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials (OIDC)
+        if: steps.freshness.outputs.skip_deploy != 'true'
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: arn:aws:iam::038462793348:role/meetingmind-github-actions-role
+          aws-region: us-east-1
+
+      - name: Trigger and Monitor SSM Deployment
+        if: steps.freshness.outputs.skip_deploy != 'true'
+        run: |
+          set -euo pipefail
+
+          # 1. Validate target commit SHA format (exactly 40 lowercase hex chars)
+          if ! [[ "${GITHUB_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "ERROR: GITHUB_SHA '${GITHUB_SHA}' is not a valid 40-character lowercase hexadecimal string." >&2
+            exit 1
+          fi
+
+          echo "================================================================="
+          echo "==> Triggering SSM Deployment via Document 'MeetingMind-Deploy'"
+          echo "    Target Instance: i-01c527503dec39f00"
+          echo "    Target Commit:   ${GITHUB_SHA}"
+          echo "================================================================="
+
+          SEND_OUTPUT=$(aws ssm send-command \
+            --document-name "MeetingMind-Deploy" \
+            --instance-ids "i-01c527503dec39f00" \
+            --parameters "{\"CommitSha\":[\"${GITHUB_SHA}\"]}" \
+            --comment "Automated CD deployment for commit ${GITHUB_SHA}" \
+            --timeout-seconds 1200 \
+            --region us-east-1 \
+            --output json)
+
+          COMMAND_ID=$(echo "${SEND_OUTPUT}" | jq -r '.Command.CommandId')
+
+          if [ -z "${COMMAND_ID}" ] || [ "${COMMAND_ID}" = "null" ]; then
+            echo "ERROR: Failed to retrieve CommandId from SSM send-command response." >&2
+            echo "${SEND_OUTPUT}" >&2
+            exit 1
+          fi
+
+          echo "==> SSM Command sent successfully."
+          echo "    Command ID: ${COMMAND_ID}"
+          echo "==> Polling command status (every 10s, timeout 1200s)..."
+
+          START_TIME=$(date +%s)
+          TIMEOUT_SECONDS=1200
+          POLL_INTERVAL=10
+          MAX_TRANSIENT_RETRIES=5
+          TRANSIENT_ERROR_COUNT=0
+
+          # Initial delay for invocation record propagation in SSM
+          sleep 5
+
+          while true; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED=$((CURRENT_TIME - START_TIME))
+
+            if [ ${ELAPSED} -ge ${TIMEOUT_SECONDS} ]; then
+              echo "ERROR: Deployment polling timed out after ${TIMEOUT_SECONDS} seconds." >&2
+              exit 1
+            fi
+
+            # Retrieve command invocation
+            INVOCATION_EXIT_CODE=0
+            INVOCATION_OUTPUT=$(aws ssm get-command-invocation \
+              --command-id "${COMMAND_ID}" \
+              --instance-id "i-01c527503dec39f00" \
+              --region us-east-1 \
+              --output json 2>&1) || INVOCATION_EXIT_CODE=$?
+
+            if [ ${INVOCATION_EXIT_CODE} -ne 0 ]; then
+              # 1. Handle transient InvocationDoesNotExist during early propagation
+              if echo "${INVOCATION_OUTPUT}" | grep -q "InvocationDoesNotExist"; then
+                echo "[${ELAPSED}s] Invocation record not yet available in SSM; retrying in ${POLL_INTERVAL}s..."
+                sleep ${POLL_INTERVAL}
+                continue
+              fi
+
+              # 2. Check for permanent authorization / parameter errors and fail immediately
+              if echo "${INVOCATION_OUTPUT}" | grep -qiE "AccessDenied|InvalidCommandId|InvalidInstanceId|ValidationException|UnrecognizedClientException|SignatureDoesNotMatch|AuthFailure"; then
+                echo "ERROR: Permanent AWS error encountered during SSM polling (exit code ${INVOCATION_EXIT_CODE}):" >&2
+                echo "${INVOCATION_OUTPUT}" >&2
+                if echo "${INVOCATION_OUTPUT}" | grep -q "AccessDenied"; then
+                  echo "HINT: The IAM role likely lacks 'ssm:GetCommandInvocation' permission (requires Resource: '*' or 'arn:aws:ssm:us-east-1:038462793348:*')." >&2
+                fi
+                exit 1
+              fi
+
+              # 3. Handle genuinely transient connectivity / endpoint / throttling errors with bounded retries
+              if echo "${INVOCATION_OUTPUT}" | grep -qiE "Could not connect|ConnectTimeout|EndpointConnectionError|RequestTimeout|Throttling|ProvisionedThroughputExceeded|ServiceUnavailable|HTTP 5"; then
+                TRANSIENT_ERROR_COUNT=$((TRANSIENT_ERROR_COUNT + 1))
+                echo "WARNING: Transient AWS connectivity/throttling error [attempt ${TRANSIENT_ERROR_COUNT}/${MAX_TRANSIENT_RETRIES}]:" >&2
+                echo "${INVOCATION_OUTPUT}" >&2
+                if [ ${TRANSIENT_ERROR_COUNT} -ge ${MAX_TRANSIENT_RETRIES} ]; then
+                  echo "ERROR: Exceeded maximum consecutive transient retries (${MAX_TRANSIENT_RETRIES}). Aborting deployment polling." >&2
+                  exit 1
+                fi
+                sleep ${POLL_INTERVAL}
+                continue
+              fi
+
+              # 4. Any other unexpected CLI error: fail immediately
+              echo "ERROR: Unhandled error calling 'aws ssm get-command-invocation' (exit code ${INVOCATION_EXIT_CODE}):" >&2
+              echo "${INVOCATION_OUTPUT}" >&2
+              exit 1
+            fi
+
+            # Successful AWS CLI call: reset transient error counter
+            TRANSIENT_ERROR_COUNT=0
+            INVOCATION_JSON="${INVOCATION_OUTPUT}"
+            STATUS=$(echo "${INVOCATION_JSON}" | jq -r '.Status // empty' 2>/dev/null || true)
+            STATUS_DETAILS=$(echo "${INVOCATION_JSON}" | jq -r '.StatusDetails // empty' 2>/dev/null || true)
+
+            if [ -z "${STATUS}" ]; then
+              echo "ERROR: Received unparseable or empty status in SSM invocation response:" >&2
+              echo "${INVOCATION_JSON}" >&2
+              exit 1
+            fi
+
+            echo "[${ELAPSED}s] Deployment Status: ${STATUS} (${STATUS_DETAILS})"
+
+            case "${STATUS}" in
+              Success)
+                echo "================================================================="
+                echo "==> DEPLOYMENT SUCCEEDED"
+                echo "================================================================="
+                echo "--- Deployment Output ---"
+                echo "${INVOCATION_JSON}" | jq -r '.StandardOutputContent // "No standard output provided."'
+                exit 0
+                ;;
+              Failed|Cancelled|TimedOut|Undeliverable|Terminated|DeliveryTimedOut|ExecutionTimedOut|InvalidPlatform|AccessDenied)
+                echo "================================================================="
+                echo "==> DEPLOYMENT FAILED: Status '${STATUS}' (${STATUS_DETAILS})"
+                echo "================================================================="
+                echo "--- Standard Output ---"
+                echo "${INVOCATION_JSON}" | jq -r '.StandardOutputContent // "No standard output provided."'
+                echo "--- Standard Error ---"
+                echo "${INVOCATION_JSON}" | jq -r '.StandardErrorContent // "No standard error provided."'
+                exit 1
+                ;;
+              Pending|InProgress|Delayed)
+                sleep ${POLL_INTERVAL}
+                ;;
+              *)
+                if echo "${STATUS}" | grep -iq "timed"; then
+                  echo "ERROR: Deployment timed out with status '${STATUS}'." >&2
+                  echo "${INVOCATION_JSON}" | jq -r '.StandardErrorContent // empty' >&2
+                  exit 1
+                fi
+                sleep ${POLL_INTERVAL}
+                ;;
+            esac
+          done
+
+      - name: Verify Public Application Ingress
+        if: steps.freshness.outputs.skip_deploy != 'true'
+        run: |
+          echo "Verifying public ingress health endpoint: https://meetingmind-xeno.duckdns.org/healthz"
+          INGRESS_OK=false
+          for i in $(seq 1 6); do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://meetingmind-xeno.duckdns.org/healthz || true)
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Public healthcheck verified: HTTP 200 OK."
+              INGRESS_OK=true
+              break
+            fi
+            echo "Attempt $i: Received HTTP ${HTTP_STATUS}, retrying in 5s..."
+            sleep 5
+          done
+          if [ "$INGRESS_OK" = "false" ]; then
+            echo "ERROR: Public ingress healthcheck failed to return HTTP 200 within verification window." >&2
+            exit 1
+          fi
 
