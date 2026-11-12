@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +25,9 @@ import static org.mockito.Mockito.*;
  */
 @SpringBootTest
 @DirtiesContext
+@TestPropertySource(properties = {
+    "spring.kafka.consumer.group-id=meeting-analysis-kafka-container-test-group"
+})
 public class MeetingAnalysisKafkaContainerTest extends BaseKafkaIntegrationTest {
 
     @Autowired
@@ -40,6 +44,9 @@ public class MeetingAnalysisKafkaContainerTest extends BaseKafkaIntegrationTest 
 
         when(meetingOrchestrator.processMeeting(any(UUID.class)))
                 .thenReturn(CompletableFuture.completedFuture(null));
+
+        // Allow consumer time to fully connect and assign topic partitions
+        Thread.sleep(3000);
 
         kafkaTemplate.send("meeting-analysis-requests", meetingId.toString(), event).get(10, TimeUnit.SECONDS);
 
