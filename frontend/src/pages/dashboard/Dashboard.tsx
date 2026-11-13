@@ -5,24 +5,22 @@ import { useActionItems, useUpdateActionItemStatus } from '../../hooks/useAction
 import { useAuth } from '../../features/auth/AuthContext'
 import {
   Video,
-  Sparkles,
   ListTodo,
   CheckCircle2,
   Clock,
   ArrowRight,
-  TrendingUp,
   Circle,
   Plus,
-  Bot,
-  Layers,
-  Calendar
+  Search,
+  CheckCheck
 } from 'lucide-react'
 import { StatCard } from '../../components/common/StatCard'
 import { GlassCard } from '../../components/common/GlassCard'
-import { StatusBadge, Badge } from '../../components/common/Badge'
+import { StatusBadge } from '../../components/common/Badge'
 import { Button } from '../../components/common/Button'
 import { EmptyState } from '../../components/common/EmptyState'
 import { PageSkeleton } from '../../components/common/LoadingSkeleton'
+import { getGreeting, formatDisplayName } from '../../utils/userGreeting'
 
 export function Dashboard() {
   const { user } = useAuth()
@@ -30,13 +28,8 @@ export function Dashboard() {
   const { data: actionItemsData, isLoading: actionItemsLoading } = useActionItems()
   const { mutate: updateStatus } = useUpdateActionItemStatus()
 
-  // Time of day greeting
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours()
-    if (hour < 12) return 'Good morning'
-    if (hour < 18) return 'Good afternoon'
-    return 'Good evening'
-  }, [])
+  const greeting = useMemo(() => getGreeting(), [])
+  const displayName = useMemo(() => formatDisplayName(user), [user])
 
   if (meetingsLoading || actionItemsLoading) {
     return <PageSkeleton />
@@ -44,9 +37,9 @@ export function Dashboard() {
 
   if (meetingsError) {
     return (
-      <GlassCard className="border-rose-500/30 bg-rose-500/5">
-        <h2 className="text-lg font-bold text-rose-400 mb-1">Failed to load dashboard data</h2>
-        <p className="text-sm text-slate-400">{meetingsError.message}</p>
+      <GlassCard className="border-rose-300 bg-rose-50/60 text-rose-800">
+        <h2 className="text-base font-bold mb-1">Failed to load dashboard data</h2>
+        <p className="text-xs text-rose-700">{meetingsError.message}</p>
       </GlassCard>
     )
   }
@@ -56,7 +49,7 @@ export function Dashboard() {
 
   const totalMeetings = meetings.length
   const completedMeetings = meetings.filter(m => m.status === 'COMPLETED').length
-  const analyzingMeetings = meetings.filter(m => m.status !== 'COMPLETED' && m.status !== 'FAILED').length
+  const processingMeetings = meetings.filter(m => m.status !== 'COMPLETED' && m.status !== 'FAILED').length
   const openActionItems = actionItems.filter(ai => ai.status === 'OPEN').length
   const completedActionItems = actionItems.filter(ai => ai.status === 'DONE').length
 
@@ -70,36 +63,31 @@ export function Dashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
-      {/* Top Greeting & Quick Action Banner */}
-      <div className="relative rounded-3xl bg-gradient-to-r from-cyan-900/30 via-[#0b1b33] to-[#081324] border border-cyan-500/20 p-6 sm:p-8 overflow-hidden shadow-2xl">
-        {/* Atmospheric Glow */}
-        <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-0 right-1/4 w-60 h-60 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
+      {/* Welcome Section */}
+      <div className="relative rounded-2xl bg-gradient-to-br from-white/96 via-white/90 to-[#EAF1F6]/50 backdrop-blur-md border border-[#648296]/16 p-6 sm:p-8 shadow-[0_1px_2px_rgba(23,43,58,0.025),0_8px_24px_-4px_rgba(23,43,58,0.045),inset_0_1px_0_0_rgba(255,255,255,0.95)]">
+        {/* Top-edge reflection hairline */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent rounded-t-2xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Multi-Agent AI Studio</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
-              {greeting}, {user?.username || 'Executive'}
+          <div className="space-y-1.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#172B3A] tracking-tight">
+              {greeting}, {displayName}
             </h1>
-            <p className="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
-              MeetingMind has processed your meetings through the 4-agent pipeline. Track deliverables, summaries, and action items in real time.
+            <p className="text-sm text-[#5A6E7F] max-w-2xl leading-relaxed">
+              Here is what is happening with your meetings, deliverables, and follow-up communication.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <Link to="/meetings/new">
               <Button variant="primary" icon={Plus}>
-                New Analysis
+                New Meeting
               </Button>
             </Link>
             <Link to="/search">
-              <Button variant="secondary" icon={Bot}>
-                Ask RAG
+              <Button variant="secondary" icon={Search}>
+                Search Meetings
               </Button>
             </Link>
           </div>
@@ -107,101 +95,93 @@ export function Dashboard() {
       </div>
 
       {/* 4 Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Meetings"
           value={totalMeetings}
           icon={Video}
-          color="cyan"
-          change={totalMeetings > 0 ? `${totalMeetings} recorded` : 'Ready to start'}
-          trend="up"
+          change={totalMeetings > 0 ? `${totalMeetings} recorded` : 'No meetings yet'}
+          trend="neutral"
           subtitle="All sessions"
         />
         <StatCard
-          title="Analyzed"
+          title="Meetings Processed"
           value={completedMeetings}
-          icon={Sparkles}
-          color="emerald"
-          change={`${completionRate}% verified`}
+          icon={CheckCircle2}
+          change={`${completionRate}% completed`}
           trend={completionRate > 50 ? 'up' : 'neutral'}
-          subtitle="4-agent pipeline"
+          subtitle={processingMeetings > 0 ? `${processingMeetings} processing` : 'Up to date'}
         />
         <StatCard
-          title="Pending Tasks"
+          title="Pending Action Items"
           value={openActionItems}
           icon={ListTodo}
-          color="amber"
-          change={openActionItems > 0 ? `${openActionItems} awaiting action` : 'All caught up!'}
+          change={openActionItems > 0 ? `${openActionItems} open tasks` : 'All caught up'}
           trend={openActionItems > 0 ? 'neutral' : 'up'}
-          subtitle="From all meetings"
+          subtitle="Assigned deliverables"
         />
         <StatCard
-          title="Completed Tasks"
+          title="Completed Action Items"
           value={completedActionItems}
-          icon={CheckCircle2}
-          color="blue"
-          change={`${completedActionItems} tasks resolved`}
+          icon={CheckCheck}
+          change={`${completedActionItems} closed`}
           trend="up"
-          subtitle="Deliverables closed"
+          subtitle="Resolved deliverables"
         />
       </div>
 
-      {/* Analytics & Meeting Pipeline Distribution */}
+      {/* Activity & Meeting Overview (2 Columns) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Pipeline Analytics & Progress Breakdown */}
+        {/* Left Column (1 Col): Meeting Activity Summary */}
         <GlassCard className="lg:col-span-1 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                  <TrendingUp className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm">Pipeline Health</h3>
-                  <p className="text-xs text-slate-400">Analysis status distribution</p>
-                </div>
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#648296]/14">
+              <div>
+                <h3 className="font-bold text-[#172B3A] text-sm">Meeting Activity</h3>
+                <p className="text-xs text-[#718096]">Processing and deliverable overview</p>
               </div>
-              <Badge variant="cyan" size="sm">Live</Badge>
             </div>
 
-            {/* Visual Progress Bar */}
-            <div className="mt-6 space-y-4">
+            {/* Progress Bars with Inset Depth */}
+            <div className="space-y-4 pt-1">
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-medium">
-                  <span className="text-slate-300">Completed Analyses</span>
-                  <span className="text-emerald-400">{completedMeetings} / {totalMeetings}</span>
+                  <span className="text-[#5A6E7F]">Meetings Processed</span>
+                  <span className="text-[#172B3A] font-semibold">{completedMeetings} / {totalMeetings}</span>
                 </div>
-                <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-white/5">
+                <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-[#648296]/10 shadow-[inset_0_1px_2px_rgba(23,43,58,0.06)]">
                   <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-[#168AAD] to-[#1da5cf] rounded-full shadow-[0_1px_2px_rgba(22,138,173,0.3)] transition-all duration-300"
                     style={{ width: `${totalMeetings ? (completedMeetings / totalMeetings) * 100 : 0}%` }}
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-medium">
-                  <span className="text-slate-300">Processing in Kafka / Agents</span>
-                  <span className="text-amber-400">{analyzingMeetings}</span>
+              {processingMeetings > 0 && (
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span className="text-[#5A6E7F]">Meetings Being Processed</span>
+                    <span className="text-amber-600 font-semibold">{processingMeetings}</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-[#648296]/10 shadow-[inset_0_1px_2px_rgba(23,43,58,0.06)]">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full shadow-[0_1px_2px_rgba(245,158,11,0.3)] transition-all duration-300"
+                      style={{ width: `${totalMeetings ? (processingMeetings / totalMeetings) * 100 : 0}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-white/5">
-                  <div
-                    className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-500"
-                    style={{ width: `${totalMeetings ? (analyzingMeetings / totalMeetings) * 100 : 0}%` }}
-                  />
-                </div>
-              </div>
+              )}
 
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-medium">
-                  <span className="text-slate-300">Action Item Completion</span>
-                  <span className="text-cyan-400">
+                  <span className="text-[#5A6E7F]">Action Item Completion</span>
+                  <span className="text-[#172B3A] font-semibold">
                     {actionItems.length ? Math.round((completedActionItems / actionItems.length) * 100) : 0}%
                   </span>
                 </div>
-                <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-white/5">
+                <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-[#648296]/10 shadow-[inset_0_1px_2px_rgba(23,43,58,0.06)]">
                   <div
-                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-emerald-600 to-teal-500 rounded-full shadow-[0_1px_2px_rgba(16,185,129,0.3)] transition-all duration-300"
                     style={{ width: `${actionItems.length ? (completedActionItems / actionItems.length) * 100 : 0}%` }}
                   />
                 </div>
@@ -209,76 +189,79 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Quick Info Box */}
-          <div className="mt-8 pt-5 border-t border-white/[0.08] flex items-center justify-between text-xs">
-            <span className="text-slate-400">Orchestrator:</span>
-            <span className="font-semibold text-cyan-300">Sequential Multi-Agent (4x)</span>
+          <div className="mt-6 pt-4 border-t border-[#648296]/14 flex items-center justify-between text-xs text-[#718096]">
+            <span>Active deliverables:</span>
+            <span className="font-semibold text-[#172B3A]">{openActionItems} open</span>
           </div>
         </GlassCard>
 
-        {/* Right: Quick Action Items */}
+        {/* Right Column (2 Cols): Pending Action Items */}
         <GlassCard className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                <ListTodo className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white text-base">Deliverables & Action Items</h3>
-                <p className="text-xs text-slate-400">Tasks assigned across recent meetings</p>
-              </div>
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#648296]/14">
+            <div>
+              <h3 className="font-bold text-[#172B3A] text-sm">Action Items Needing Attention</h3>
+              <p className="text-xs text-[#718096]">Deliverables extracted from your meetings</p>
             </div>
 
             <Link
               to="/action-items"
-              className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 group transition-colors"
+              className="text-xs font-semibold text-[#168AAD] hover:text-[#13728F] flex items-center gap-1 transition-colors"
             >
-              <span>View All</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              <span>View all</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           {actionItems.length === 0 ? (
-            <div className="py-8 text-center text-slate-400 text-sm">
-              <p>No action items extracted yet. Run a meeting analysis to generate tasks.</p>
+            <div className="py-8 text-center text-[#718096] text-xs">
+              <p>No action items found. Analyze a meeting to generate tasks and follow-ups.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {actionItems.slice(0, 4).map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-start gap-3 p-3.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-cyan-500/20 transition-all duration-200"
+                  className="flex items-start gap-3 p-3.5 rounded-xl bg-white/75 hover:bg-white border border-[#648296]/14 hover:border-[#168AAD]/30 shadow-[0_1px_2px_rgba(23,43,58,0.02),inset_0_1px_0_0_rgba(255,255,255,0.9)] hover:shadow-[0_4px_12px_rgba(23,43,58,0.04)] transition-all duration-180"
                 >
                   <button
                     onClick={() => toggleTaskStatus(item.id, item.status)}
-                    className="mt-0.5 text-slate-400 hover:text-cyan-400 transition-colors flex-shrink-0 cursor-pointer"
-                    aria-label={item.status === 'OPEN' ? 'Mark as done' : 'Reopen'}
+                    className="mt-0.5 text-[#718096] hover:text-emerald-600 transition-colors cursor-pointer flex-shrink-0"
+                    title={item.status === 'DONE' ? 'Mark as Open' : 'Mark as Done'}
                   >
                     {item.status === 'DONE' ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     ) : (
-                      <Circle className="w-5 h-5" />
+                      <Circle className="w-4 h-4 text-[#718096]" />
                     )}
                   </button>
 
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${item.status === 'DONE' ? 'line-through text-slate-400' : 'text-white'}`}>
+                    <p className={`text-xs sm:text-sm font-medium ${item.status === 'DONE' ? 'line-through text-[#718096]' : 'text-[#172B3A]'}`}>
                       {item.description}
                     </p>
-                    <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-slate-400">
+                    <div className="flex items-center gap-2 mt-1 text-[11px] text-[#718096]">
                       {item.assignee && (
-                        <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-medium border border-cyan-500/20">
-                          {item.assignee}
-                        </span>
+                        <span>Assignee: <strong className="text-[#172B3A] font-medium">{item.assignee}</strong></span>
                       )}
                       {item.dueDate && (
-                        <span className="flex items-center gap-1 text-slate-400">
-                          <Clock className="w-3.5 h-3.5" />
-                          {item.dueDate}
-                        </span>
+                        <>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {item.dueDate}
+                          </span>
+                        </>
                       )}
                     </div>
                   </div>
+
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] ${
+                    item.status === 'DONE'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}>
+                    {item.status}
+                  </span>
                 </div>
               ))}
             </div>
@@ -286,79 +269,76 @@ export function Dashboard() {
         </GlassCard>
       </div>
 
-      {/* Recent Meetings Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-              <Video className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">Recent Meetings</h2>
-              <p className="text-xs text-slate-400">Transcripts processed and AI synthesis results</p>
-            </div>
+      {/* Recent Meetings Table / Compact List */}
+      <GlassCard padding="none" className="overflow-hidden">
+        <div className="p-5 sm:p-6 border-b border-[#648296]/14 flex items-center justify-between bg-gradient-to-r from-transparent via-white/40 to-transparent">
+          <div>
+            <h2 className="text-base font-bold text-[#172B3A]">Recent Meetings</h2>
+            <p className="text-xs text-[#718096] mt-0.5">Your analyzed transcripts and summaries</p>
           </div>
 
           <Link
             to="/meetings"
-            className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 group transition-colors"
+            className="text-xs font-semibold text-[#168AAD] hover:text-[#13728F] flex items-center gap-1 transition-colors"
           >
-            <span>Browse All Meetings</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            <span>View all meetings</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         {meetings.length === 0 ? (
-          <EmptyState
-            icon={Calendar}
-            title="No meetings recorded yet"
-            description="Paste a meeting transcript to let the 4-agent AI pipeline summarize decisions, extract deliverables, and draft follow-up communications."
-            actionLabel="Analyze your first meeting"
-            onAction={() => window.location.href = '/meetings/new'}
-            actionIcon={Plus}
-          />
+          <div className="p-8">
+            <EmptyState
+              icon={Video}
+              title="No meetings recorded yet"
+              description="Start by creating your first meeting to get an executive summary, action items, and email draft."
+              actionLabel="New Meeting"
+              onAction={() => window.location.href = '/meetings/new'}
+            />
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {meetings.slice(0, 6).map((meeting) => (
-              <Link
-                key={meeting.id}
-                to={`/meetings/${meeting.id}`}
-                className="group"
-              >
-                <GlassCard
-                  className="h-full flex flex-col justify-between hover:border-cyan-500/35 group-hover:shadow-cyan-500/10"
-                  padding="md"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <StatusBadge status={meeting.status} />
-                      <span className="text-xs text-slate-400 flex items-center gap-1 font-mono">
-                        <Clock className="w-3 h-3" />
-                        {new Date(meeting.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-
-                    <h3 className="font-bold text-white text-base group-hover:text-cyan-300 transition-colors line-clamp-2">
-                      {meeting.title || 'Untitled Meeting'}
-                    </h3>
-                  </div>
-
-                  <div className="mt-5 pt-4 border-t border-white/[0.08] flex items-center justify-between text-xs text-slate-400">
-                    <span className="flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Pipeline Detail</span>
-                    </span>
-                    <span className="text-cyan-400 group-hover:translate-x-1 transition-transform flex items-center gap-1 font-semibold">
-                      <span>View</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </GlassCard>
-              </Link>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead className="bg-[#EAF1F6]/75 text-[#5A6E7F] text-[11px] font-semibold uppercase tracking-wider border-b border-[#648296]/14">
+                <tr>
+                  <th className="py-3 px-5">Title</th>
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#648296]/14">
+                {meetings.slice(0, 5).map((m) => (
+                  <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 px-5">
+                      <Link
+                        to={`/meetings/${m.id}`}
+                        className="font-medium text-[#172B3A] hover:text-[#168AAD] transition-colors"
+                      >
+                        {m.title}
+                      </Link>
+                    </td>
+                    <td className="py-3.5 px-4 text-xs text-[#718096] whitespace-nowrap">
+                      {new Date(m.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <StatusBadge status={m.status} />
+                    </td>
+                    <td className="py-3.5 px-5 text-right whitespace-nowrap">
+                      <Link
+                        to={`/meetings/${m.id}`}
+                        className="text-xs font-semibold text-[#168AAD] hover:text-[#13728F] transition-colors"
+                      >
+                        Open details →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-      </div>
+      </GlassCard>
     </div>
   )
 }

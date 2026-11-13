@@ -1,60 +1,101 @@
+import { useState } from 'react'
 import { useAuth } from '../../features/auth/AuthContext'
 import {
-  Settings,
-  Cpu,
-  Database,
+  User,
   LogOut,
-  Sparkles,
-  Server,
-  Zap
+  Save,
+  CheckCircle2,
+  Bell,
+  Database
 } from 'lucide-react'
 import { GlassCard } from '../../components/common/GlassCard'
 import { Badge } from '../../components/common/Badge'
 import { Button } from '../../components/common/Button'
+import { Input } from '../../components/common/Input'
+import { formatDisplayName } from '../../utils/userGreeting'
 
 export function SettingsPage() {
   const { user, logout } = useAuth()
+  const currentDisplayName = formatDisplayName(user)
+  const [preferredName, setPreferredName] = useState(
+    localStorage.getItem('meetingmind_display_name') || (currentDisplayName !== 'there' ? currentDisplayName : '')
+  )
+  const [savedSuccess, setSavedSuccess] = useState(false)
+
+  // Preferences state
+  const [autoDraft, setAutoDraft] = useState(true)
+  const [syncCalendar, setSyncCalendar] = useState(true)
+  const [factAudit, setFactAudit] = useState(true)
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (preferredName.trim()) {
+      localStorage.setItem('meetingmind_display_name', preferredName.trim())
+    } else {
+      localStorage.removeItem('meetingmind_display_name')
+    }
+    setSavedSuccess(true)
+    setTimeout(() => {
+      setSavedSuccess(false)
+      window.location.reload()
+    }, 1200)
+  }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-200">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-md">
-            <Settings className="w-5 h-5" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Settings & Architecture Overview
-          </h1>
-        </div>
-        <p className="text-sm text-slate-400 mt-1">
-          Manage your account profile and inspect the MeetingMind system architecture configuration.
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#172B3A] tracking-tight">
+          Settings & Preferences
+        </h1>
+        <p className="text-xs sm:text-sm text-[#5A6E7F] mt-1">
+          Manage your account profile, display name, and workspace preferences.
         </p>
       </div>
 
       {/* User Profile Card */}
       <GlassCard padding="lg" className="space-y-6">
-        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+        <div className="flex items-center justify-between pb-4 border-b border-[#648296]/14">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-extrabold text-base shadow-lg shadow-cyan-950/40">
-              {user?.username?.substring(0, 2).toUpperCase() || 'MM'}
+            <div className="w-11 h-11 rounded-xl bg-[#168AAD]/15 text-[#168AAD] flex items-center justify-center font-bold text-base flex-shrink-0">
+              {currentDisplayName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">{user?.username || 'Executive'}</h2>
-              <p className="text-xs text-slate-400">{user?.email || 'Authenticated User'}</p>
+              <h2 className="text-base font-bold text-[#172B3A]">{currentDisplayName}</h2>
+              <p className="text-xs text-[#718096]">{user?.email || user?.username || 'Active User'}</p>
             </div>
           </div>
           <Badge variant="emerald" size="sm">Active Session</Badge>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-            <span className="font-semibold text-slate-400">Account ID:</span>
-            <p className="font-mono text-cyan-300 truncate">{user?.id || 'Local User'}</p>
+        {/* Display Name Edit Form */}
+        <form onSubmit={handleSaveProfile} className="space-y-4 max-w-lg">
+          <div className="space-y-1">
+            <Input
+              label="Preferred Display Name"
+              icon={User}
+              value={preferredName}
+              onChange={(e) => setPreferredName(e.target.value)}
+              placeholder="e.g. Abhinav"
+              helperText="This name will be used across your dashboard greetings and notifications."
+            />
           </div>
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-            <span className="font-semibold text-slate-400">Security Standard:</span>
-            <p className="font-medium text-emerald-400">OAuth 2.0 PKCE + JWT Bearer</p>
+
+          <div className="flex items-center gap-3">
+            <Button type="submit" variant="primary" size="sm" icon={savedSuccess ? CheckCircle2 : Save}>
+              {savedSuccess ? 'Saved!' : 'Save Display Name'}
+            </Button>
+          </div>
+        </form>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-[#648296]/14 text-xs">
+          <div className="p-3.5 rounded-xl bg-[#F4F7FA] border border-[#648296]/14 space-y-1">
+            <span className="font-semibold text-[#5A6E7F]">User Identifier:</span>
+            <p className="font-mono text-[#172B3A] truncate">{user?.id || 'Local Account'}</p>
+          </div>
+          <div className="p-3.5 rounded-xl bg-[#F4F7FA] border border-[#648296]/14 space-y-1">
+            <span className="font-semibold text-[#5A6E7F]">Authentication Method:</span>
+            <p className="font-medium text-[#172B3A]">JWT Bearer + Google OAuth</p>
           </div>
         </div>
 
@@ -65,65 +106,82 @@ export function SettingsPage() {
         </div>
       </GlassCard>
 
-      {/* Architecture & Infrastructure Status Card */}
-      <GlassCard padding="lg" className="space-y-6">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-white/[0.08]">
-          <Cpu className="w-5 h-5 text-cyan-400" />
-          <h2 className="text-base font-bold text-white">System Architecture Specifications</h2>
+      {/* Workspace Preferences */}
+      <GlassCard padding="lg" className="space-y-5">
+        <div className="flex items-center gap-2 pb-3 border-b border-[#648296]/14">
+          <Bell className="w-4 h-4 text-[#168AAD]" />
+          <h2 className="text-base font-bold text-[#172B3A]">Workspace & Analysis Preferences</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-white text-xs flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                AI Pipeline Model
-              </span>
-              <span className="text-[11px] text-cyan-300 font-mono">Grok / xAI</span>
+        <div className="space-y-4 text-xs sm:text-sm">
+          <label className="flex items-center justify-between p-3.5 rounded-xl bg-[#F4F7FA] border border-[#648296]/14 cursor-pointer">
+            <div>
+              <p className="font-semibold text-[#172B3A]">Automated Follow-up Email Drafts</p>
+              <p className="text-xs text-[#5A6E7F] mt-0.5">Generate ready-to-send draft communications automatically for every analyzed meeting.</p>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              OpenAI-compatible client via Spring AI abstraction. Free-tier compliant, zero-cost multi-agent pipeline.
-            </p>
-          </div>
+            <input
+              type="checkbox"
+              checked={autoDraft}
+              onChange={(e) => setAutoDraft(e.target.checked)}
+              className="w-4 h-4 text-[#168AAD] rounded-md border-[#648296]/30 focus:ring-[#168AAD] cursor-pointer"
+            />
+          </label>
 
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-white text-xs flex items-center gap-1.5">
-                <Database className="w-3.5 h-3.5 text-emerald-400" />
-                Phase 7 RAG Store
-              </span>
-              <span className="text-[11px] text-emerald-300 font-mono">PostgreSQL pgvector</span>
+          <label className="flex items-center justify-between p-3.5 rounded-xl bg-[#F4F7FA] border border-[#648296]/14 cursor-pointer">
+            <div>
+              <p className="font-semibold text-[#172B3A]">Calendar Deadline Detection</p>
+              <p className="text-xs text-[#5A6E7F] mt-0.5">Automatically map conversational deadlines into your schedule calendar.</p>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Local-first vector similarity search. Chunks and embeddings stored directly in relational schema.
-            </p>
-          </div>
+            <input
+              type="checkbox"
+              checked={syncCalendar}
+              onChange={(e) => setSyncCalendar(e.target.checked)}
+              className="w-4 h-4 text-[#168AAD] rounded-md border-[#648296]/30 focus:ring-[#168AAD] cursor-pointer"
+            />
+          </label>
 
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-white text-xs flex items-center gap-1.5">
-                <Server className="w-3.5 h-3.5 text-purple-400" />
-                Phase 11 Event Broker
-              </span>
-              <span className="text-[11px] text-purple-300 font-mono">Apache Kafka</span>
+          <label className="flex items-center justify-between p-3.5 rounded-xl bg-[#F4F7FA] border border-[#648296]/14 cursor-pointer">
+            <div>
+              <p className="font-semibold text-[#172B3A]">Quality & Accuracy Review</p>
+              <p className="text-xs text-[#5A6E7F] mt-0.5">Audit extracted deliverables against the raw transcript to flag potential hallucinations.</p>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Decoupled asynchronous analysis queue on topic <code className="text-cyan-300 font-mono text-[11px]">meeting-analysis-requests</code>.
-            </p>
-          </div>
+            <input
+              type="checkbox"
+              checked={factAudit}
+              onChange={(e) => setFactAudit(e.target.checked)}
+              className="w-4 h-4 text-[#168AAD] rounded-md border-[#648296]/30 focus:ring-[#168AAD] cursor-pointer"
+            />
+          </label>
+        </div>
+      </GlassCard>
 
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-white text-xs flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                Phase 10 Cache Layer
-              </span>
-              <span className="text-[11px] text-amber-300 font-mono">Redis (TTL 1h)</span>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Cache-aside pattern with automatic eviction on meeting updates and task completion toggles.
-            </p>
-          </div>
+      {/* Data & Privacy */}
+      <GlassCard padding="lg" className="space-y-4">
+        <div className="flex items-center gap-2 pb-3 border-b border-[#648296]/14">
+          <Database className="w-4 h-4 text-[#168AAD]" />
+          <h2 className="text-base font-bold text-[#172B3A]">Data Storage & Privacy</h2>
+        </div>
+
+        <p className="text-xs text-[#5A6E7F] leading-relaxed">
+          Your meeting transcripts, extracted action items, and follow-up drafts are securely persisted in your dedicated database. Data is never shared with third-party advertisers.
+        </p>
+
+        <div className="flex items-center gap-3 pt-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              const data = localStorage.getItem('meetingmind_user')
+              const blob = new Blob([data || '{}'], { type: 'application/json' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = 'meetingmind-session.json'
+              a.click()
+            }}
+          >
+            Export Account Data
+          </Button>
         </div>
       </GlassCard>
     </div>

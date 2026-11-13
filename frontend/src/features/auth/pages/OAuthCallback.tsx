@@ -2,28 +2,23 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { apiClient } from '../../../api/client'
-import { BrainCircuit, Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle, Sparkles } from 'lucide-react'
 import { GlassCard } from '../../../components/common/GlassCard'
 import { Button } from '../../../components/common/Button'
 
 export function OAuthCallback() {
-  const [error, setError] = useState('')
-  const navigate = useNavigate()
   const location = useLocation()
+  const params = new URLSearchParams(location.search)
+  const code = params.get('code')
+
+  const [error, setError] = useState(!code ? 'No authorization code found.' : '')
+  const navigate = useNavigate()
   const { login } = useAuth()
 
   const hasExchanged = React.useRef(false)
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    const code = params.get('code')
-
-    if (!code) {
-      setError('No authorization code found.')
-      return
-    }
-
-    if (hasExchanged.current) {
+    if (!code || hasExchanged.current) {
       return
     }
     hasExchanged.current = true
@@ -49,42 +44,34 @@ export function OAuthCallback() {
     }
 
     exchangeCode()
-  }, [location, login, navigate])
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#060d17] p-4 relative">
-        <div className="ambient-glow" />
-        <GlassCard padding="lg" className="max-w-md w-full border-rose-500/30 text-center space-y-4 relative z-10">
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto">
-            <AlertCircle className="w-6 h-6" />
-          </div>
-          <h2 className="text-xl font-bold text-white">Authentication Error</h2>
-          <p className="text-xs text-slate-300">{error}</p>
-          <Button variant="secondary" className="w-full" onClick={() => navigate('/login')}>
-            Return to Login
-          </Button>
-        </GlassCard>
-      </div>
-    )
-  }
+  }, [code, login, navigate])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#060d17] p-4 relative">
-      <div className="ambient-glow" />
-      <div className="text-center space-y-4 relative z-10">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 mx-auto shadow-lg shadow-cyan-500/30">
-          <div className="w-full h-full bg-[#07111e] rounded-[14px] flex items-center justify-center">
-            <BrainCircuit className="w-7 h-7 text-cyan-400" />
+    <div className="min-h-screen flex items-center justify-center bg-[#F4F7FA] p-4 text-[#172B3A]">
+      <div className="w-full max-w-md">
+        <GlassCard padding="lg" className="border-[#648296]/20 shadow-md text-center space-y-6">
+          <div className="w-12 h-12 rounded-xl bg-[#168AAD] text-white flex items-center justify-center mx-auto shadow-sm">
+            <Sparkles className="w-6 h-6 text-white" />
           </div>
-        </div>
-        <div className="flex items-center justify-center gap-2 text-white font-semibold">
-          <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
-          <span>Completing Authentication...</span>
-        </div>
-        <p className="text-xs text-slate-400">
-          Verifying Google OAuth token with backend security filter chain...
-        </p>
+
+          {error ? (
+            <div className="space-y-4">
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2 text-left">
+                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+              <Button variant="primary" onClick={() => navigate('/login')}>
+                Back to Sign In
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3 py-4">
+              <Loader2 className="w-8 h-8 text-[#168AAD] animate-spin mx-auto" />
+              <h2 className="text-base font-bold text-[#172B3A]">Authenticating with Google...</h2>
+              <p className="text-xs text-[#5A6E7F]">Please wait while we complete your sign-in.</p>
+            </div>
+          )}
+        </GlassCard>
       </div>
     </div>
   )

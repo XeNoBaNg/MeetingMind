@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { apiClient } from '../../../api/client'
-import { BrainCircuit, Lock, User, ArrowRight, AlertCircle } from 'lucide-react'
+import { Lock, User, ArrowRight, AlertCircle, Sparkles } from 'lucide-react'
 import { GlassCard } from '../../../components/common/GlassCard'
 import { Button } from '../../../components/common/Button'
 import { Input } from '../../../components/common/Input'
@@ -16,6 +16,14 @@ export function LoginPage() {
   const location = useLocation()
   const { login, isAuthenticated } = useAuth()
 
+  const urlError = new URLSearchParams(location.search).get('error')
+  const oauthError = urlError === 'oauth2_missing_id' 
+    ? 'Failed to retrieve identity from Google.' 
+    : urlError === 'oauth2_failure' 
+    ? 'Google authentication failed or was cancelled.' 
+    : ''
+  const displayError = error || oauthError
+
   useEffect(() => {
     if (isAuthenticated) {
       const from = location.state?.from
@@ -24,13 +32,6 @@ export function LoginPage() {
       } else {
         navigate('/')
       }
-    }
-    const params = new URLSearchParams(location.search)
-    const errParam = params.get('error')
-    if (errParam === 'oauth2_missing_id') {
-      setError('Failed to retrieve identity from Google.')
-    } else if (errParam === 'oauth2_failure') {
-      setError('Google authentication failed or was cancelled.')
     }
   }, [isAuthenticated, navigate, location])
 
@@ -65,31 +66,26 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#060d17] p-4 relative overflow-hidden">
-      {/* Ambient background glows */}
-      <div className="ambient-glow" />
-
-      <div className="relative z-10 w-full max-w-md">
-        <GlassCard padding="lg" className="border-cyan-500/30 shadow-2xl shadow-cyan-950/40 space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-[#F4F7FA] p-4 text-[#172B3A]">
+      <div className="w-full max-w-md">
+        <GlassCard padding="lg" className="border-[#648296]/20 shadow-md space-y-6">
           {/* Brand Header */}
           <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 mx-auto shadow-lg shadow-cyan-500/30">
-              <div className="w-full h-full bg-[#07111e] rounded-[14px] flex items-center justify-center">
-                <BrainCircuit className="w-7 h-7 text-cyan-400" />
-              </div>
+            <div className="w-12 h-12 rounded-xl bg-[#168AAD] text-white flex items-center justify-center mx-auto shadow-sm">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl font-extrabold text-[#172B3A] tracking-tight">
               Sign in to MeetingMind
             </h1>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#5A6E7F]">
               Enter your credentials or authenticate via Google OAuth.
             </p>
           </div>
 
-          {error && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5">
-              <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-              <span>{error}</span>
+          {displayError && (
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+              <span>{displayError}</span>
             </div>
           )}
 
@@ -102,7 +98,7 @@ export function LoginPage() {
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin"
+              placeholder="e.g. user or user@company.com"
             />
 
             <Input
@@ -127,47 +123,50 @@ export function LoginPage() {
             </Button>
           </form>
 
-          {/* Google OAuth & Divider */}
-          <div className="space-y-4 pt-2">
-            <div className="relative flex items-center justify-center">
-              <div className="w-full border-t border-white/[0.08]" />
-              <span className="absolute px-3 bg-[#0c182a] text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
-                Or continue with
-              </span>
+          {/* Google OAuth Option */}
+          <div className="space-y-4">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[#648296]/20" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-[#718096]">Or continue with</span>
+              </div>
             </div>
 
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              className="w-full gap-2.5"
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-xs font-semibold text-white shadow-md transition-all active:scale-[0.98] cursor-pointer"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
-                  d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z"
-                  fill="#EA4335"
-                />
-                <path
-                  d="M23.49 12.275C23.49 11.49 23.415 10.73 23.3 10H12V14.51H18.47C18.18 15.99 17.34 17.25 16.08 18.1L19.945 21.1C22.2 19.01 23.49 15.92 23.49 12.275Z"
                   fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 />
                 <path
-                  d="M5.26498 14.2949C5.02498 13.5699 4.88501 12.7999 4.88501 11.9999C4.88501 11.1999 5.01998 10.4299 5.26498 9.7049L1.275 6.60986C0.46 8.22986 0 10.0599 0 11.9999C0 13.9399 0.46 15.7699 1.28 17.3899L5.26498 14.2949Z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M12.0004 24.0001C15.2404 24.0001 17.9654 22.935 19.9454 21.095L16.0804 18.095C15.0054 18.82 13.6204 19.245 12.0004 19.245C8.8704 19.245 6.21537 17.135 5.26537 14.29L1.27539 17.385C3.25539 21.31 7.3104 24.0001 12.0004 24.0001Z"
                   fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>Continue with Google</span>
-            </button>
+              <span>Sign in with Google</span>
+            </Button>
+          </div>
 
-            <div className="text-center text-xs text-slate-400">
-              Don't have an account?{' '}
-              <Link to="/register" className="font-semibold text-cyan-400 hover:text-cyan-300">
-                Sign up
-              </Link>
-            </div>
+          <div className="pt-2 text-center text-xs text-[#5A6E7F]">
+            Don't have an account?{' '}
+            <Link to="/register" className="font-semibold text-[#168AAD] hover:underline">
+              Create account
+            </Link>
           </div>
         </GlassCard>
       </div>

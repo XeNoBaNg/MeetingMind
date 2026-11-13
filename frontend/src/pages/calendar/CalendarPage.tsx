@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useActionItems } from '../../hooks/useActionItems'
 import {
-  Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -60,12 +59,12 @@ export function CalendarPage() {
 
   if (error) {
     return (
-      <GlassCard className="border-rose-500/30 bg-rose-500/5">
-        <div className="flex items-center gap-3 text-rose-400 mb-2">
-          <AlertCircle className="w-5 h-5" />
-          <h2 className="text-lg font-bold">Failed to load calendar</h2>
+      <GlassCard className="border-rose-300 bg-rose-50/60 text-rose-800">
+        <div className="flex items-center gap-2 mb-1">
+          <AlertCircle className="w-5 h-5 text-rose-600" />
+          <h2 className="text-base font-bold">Failed to load calendar</h2>
         </div>
-        <p className="text-sm text-slate-400">{error.message}</p>
+        <p className="text-xs text-rose-700">{error.message}</p>
       </GlassCard>
     )
   }
@@ -74,39 +73,38 @@ export function CalendarPage() {
     return (
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-md">
-              <CalendarIcon className="w-5 h-5" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Action Item Schedule
-            </h1>
-          </div>
-          <p className="text-sm text-slate-400 mt-1">
-            Visual calendar of deliverables and deadlines parsed automatically by Extractor Agent.
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#172B3A] tracking-tight">
+            Schedule Calendar
+          </h1>
+          <p className="text-xs sm:text-sm text-[#5A6E7F] mt-1">
+            Visual calendar of deliverables, deadlines, and action items.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <Button variant="secondary" size="sm" onClick={goToToday}>
             Today
           </Button>
 
-          <div className="flex items-center rounded-xl bg-[#081220] border border-white/10 p-1">
+          <div className="flex items-center rounded-xl bg-white border border-[#648296]/20 p-0.5 shadow-[0_1px_2px_rgba(23,43,58,0.03),inset_0_1px_0_0_#ffffff]">
             <button
               onClick={prevMonth}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors"
+              className="p-1.5 rounded-lg text-[#5A6E7F] hover:text-[#172B3A] hover:bg-black/[0.04] transition-colors cursor-pointer"
               title="Previous Month"
+              aria-label="Previous Month"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs sm:text-sm font-bold w-32 text-center text-white">
+
+            <span className="px-3 text-xs sm:text-sm font-bold text-[#172B3A] min-w-[130px] text-center">
               {format(currentDate, 'MMMM yyyy')}
             </span>
+
             <button
               onClick={nextMonth}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors"
+              className="p-1.5 rounded-lg text-[#5A6E7F] hover:text-[#172B3A] hover:bg-black/[0.04] transition-colors cursor-pointer"
               title="Next Month"
+              aria-label="Next Month"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -117,19 +115,16 @@ export function CalendarPage() {
   }
 
   const renderDaysOfWeek = () => {
-    const days = []
-    const startDate = startOfWeek(currentDate)
-    for (let i = 0; i < 7; i++) {
-      days.push(
-        <div
-          key={i}
-          className="text-center font-bold text-[11px] text-cyan-400 uppercase tracking-wider py-3 border-b border-white/[0.08] bg-white/[0.02]"
-        >
-          {format(addDays(startDate, i), 'EEE')}
-        </div>
-      )
-    }
-    return <div className="grid grid-cols-7">{days}</div>
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    return (
+      <div className="grid grid-cols-7 border-b border-[#648296]/14 text-center py-2.5 bg-[#EAF1F6]/60">
+        {days.map((day, index) => (
+          <div key={index} className="text-xs font-semibold text-[#5A6E7F] uppercase tracking-wider">
+            {day}
+          </div>
+        ))}
+      </div>
+    )
   }
 
   const renderCells = () => {
@@ -141,68 +136,50 @@ export function CalendarPage() {
     const rows = []
     let days = []
     let day = startDate
-    let formattedDate = ''
 
     while (day <= endDate) {
       for (let i = 0; i < 7; i++) {
-        formattedDate = format(day, 'd')
         const cloneDay = day
-        const dayEvents = calendarEvents.filter(event => isSameDay(event.parsedDate, cloneDay))
-        const isCurrentDay = isToday(day)
+        const dayEvents = calendarEvents.filter(e => isSameDay(e.parsedDate, cloneDay))
         const isCurrentMonth = isSameMonth(day, monthStart)
+        const isCurrentDay = isToday(day)
 
         days.push(
           <div
             key={day.toString()}
             className={`
-              min-h-[120px] p-2.5 border-b border-r border-white/[0.06] transition-colors flex flex-col justify-between
-              ${
-                !isCurrentMonth
-                  ? 'bg-[#060e19]/40 text-slate-600'
-                  : 'bg-[#0a1526]/60 text-slate-300'
-              }
-              ${isCurrentDay ? 'bg-cyan-950/25 ring-1 ring-inset ring-cyan-500/40' : ''}
+              min-h-[95px] sm:min-h-[110px] p-2 border-b border-r border-[#648296]/14 transition-colors relative flex flex-col justify-between
+              ${!isCurrentMonth ? 'bg-slate-50/50 text-[#718096]/50' : 'bg-white/80 text-[#172B3A]'}
+              ${isCurrentDay ? 'bg-sky-50/40 ring-1 ring-inset ring-[#168AAD]/30' : ''}
             `}
           >
-            <div className="flex justify-between items-start">
+            <div className="flex items-center justify-between">
               <span
-                className={`text-xs font-semibold w-7 h-7 flex items-center justify-center rounded-xl font-mono ${
-                  isCurrentDay
-                    ? 'bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-950/40 font-bold'
-                    : isCurrentMonth
-                    ? 'text-slate-300'
-                    : 'text-slate-600'
-                }`}
+                className={`
+                  text-xs font-semibold w-6 h-6 rounded-full flex items-center justify-center
+                  ${isCurrentDay ? 'bg-[#168AAD] text-white shadow-2xs' : ''}
+                `}
               >
-                {formattedDate}
+                {format(day, 'd')}
               </span>
+
               {dayEvents.length > 0 && (
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-400 font-bold">
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-[#168AAD]/10 text-[#168AAD]">
                   {dayEvents.length}
                 </span>
               )}
             </div>
 
-            <div className="mt-2 flex-1 space-y-1.5 overflow-y-auto max-h-[90px] custom-scrollbar">
-              {dayEvents.map((event, idx) => (
+            {/* Event Chips */}
+            <div className="space-y-1 mt-1 flex-1 overflow-y-auto max-h-[68px] custom-scrollbar">
+              {dayEvents.map(event => (
                 <Link
-                  key={event.id + idx}
-                  to={`/meetings/${event.meetingId}`}
-                  className={`
-                    block text-[11px] p-2 rounded-xl border text-left transition-all truncate hover:whitespace-normal group
-                    ${
-                      event.status === 'DONE'
-                        ? 'bg-white/[0.02] border-white/5 text-slate-500 line-through'
-                        : 'bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/20 text-cyan-200 shadow-sm'
-                    }
-                  `}
-                  title={`${event.description} (${event.dueDate})`}
+                  key={event.id}
+                  to={event.meetingId ? `/meetings/${event.meetingId}` : '/action-items'}
+                  className="block p-1 rounded-md text-[11px] font-medium bg-[#EAF1F6] hover:bg-[#168AAD]/10 text-[#172B3A] hover:text-[#168AAD] border border-[#648296]/16 truncate transition-colors"
+                  title={`${event.description} (Assignee: ${event.assignee || 'Unassigned'})`}
                 >
-                  <div className="flex items-center gap-1 font-mono text-[10px] text-cyan-400 mb-0.5">
-                    <Clock className="w-3 h-3" />
-                    <span>{format(event.parsedDate, 'h:mm a')}</span>
-                  </div>
-                  <div className="truncate font-medium">{event.description}</div>
+                  <span className="truncate">{event.description}</span>
                 </Link>
               ))}
             </div>
@@ -211,23 +188,67 @@ export function CalendarPage() {
         day = addDays(day, 1)
       }
       rows.push(
-        <div className="grid grid-cols-7" key={day.toString()}>
+        <div key={day.toString()} className="grid grid-cols-7">
           {days}
         </div>
       )
       days = []
     }
-
-    return <div>{rows}</div>
+    return <div className="border-l border-[#648296]/14">{rows}</div>
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
       {renderHeader()}
 
-      <GlassCard padding="none" className="overflow-hidden border-white/10 shadow-2xl">
+      {/* Calendar Card */}
+      <GlassCard padding="none" className="overflow-hidden">
         {renderDaysOfWeek()}
         {renderCells()}
+      </GlassCard>
+
+      {/* Upcoming Tasks Summary */}
+      <GlassCard padding="md" className="space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-[#648296]/14">
+          <h3 className="text-sm font-bold text-[#172B3A]">
+            Upcoming Scheduled Deliverables
+          </h3>
+          <span className="text-xs text-[#718096]">
+            {calendarEvents.length} dated items found
+          </span>
+        </div>
+
+        {calendarEvents.length === 0 ? (
+          <p className="text-xs text-[#718096] py-3 text-center">
+            No action items with detectable due dates. Dates mentioned in transcripts (e.g. "by Friday") appear here automatically.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+            {calendarEvents.slice(0, 6).map(e => (
+              <div
+                key={e.id}
+                className="p-3 rounded-xl bg-[#F4F7FA] border border-[#648296]/14 space-y-1.5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-[#172B3A] truncate">
+                    {e.description}
+                  </span>
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-800 border border-sky-200 flex-shrink-0">
+                    {format(e.parsedDate, 'MMM d')}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-[#718096]">
+                  {e.assignee && <span>Assignee: <strong className="text-[#172B3A]">{e.assignee}</strong></span>}
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {e.dueDate}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </GlassCard>
     </div>
   )

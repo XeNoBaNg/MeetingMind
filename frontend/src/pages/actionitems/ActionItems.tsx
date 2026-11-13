@@ -8,9 +8,8 @@ import {
   Clock,
   Search,
   User,
-  Video,
-  CheckCheck,
-  AlertCircle
+  AlertCircle,
+  CheckCheck
 } from 'lucide-react'
 import { GlassCard } from '../../components/common/GlassCard'
 import { StatCard } from '../../components/common/StatCard'
@@ -31,12 +30,12 @@ export function ActionItems() {
 
   if (error) {
     return (
-      <GlassCard className="border-rose-500/30 bg-rose-500/5">
-        <div className="flex items-center gap-3 text-rose-400 mb-2">
-          <AlertCircle className="w-5 h-5" />
-          <h2 className="text-lg font-bold">Failed to load action items</h2>
+      <GlassCard className="border-rose-300 bg-rose-50/60 text-rose-800">
+        <div className="flex items-center gap-2 mb-1">
+          <AlertCircle className="w-5 h-5 text-rose-600" />
+          <h2 className="text-base font-bold">Failed to load action items</h2>
         </div>
-        <p className="text-sm text-slate-400">{error.message}</p>
+        <p className="text-xs text-rose-700">{error.message}</p>
       </GlassCard>
     )
   }
@@ -66,29 +65,23 @@ export function ActionItems() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-md">
-            <ListTodo className="w-5 h-5" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Action Items & Deliverables
-          </h1>
-        </div>
-        <p className="text-sm text-slate-400 mt-1">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#172B3A] tracking-tight">
+          Action Items & Deliverables
+        </h1>
+        <p className="text-xs sm:text-sm text-[#5A6E7F] mt-1">
           Review, assign, and track deliverables extracted across all meeting transcripts.
         </p>
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           title="Total Deliverables"
           value={totalTasks}
           icon={ListTodo}
-          color="cyan"
           change={`${assignees.length} assignees`}
           trend="neutral"
           subtitle="All extracted tasks"
@@ -97,162 +90,175 @@ export function ActionItems() {
           title="Pending Deliverables"
           value={openTasks}
           icon={Clock}
-          color="amber"
-          change={openTasks > 0 ? `${openTasks} require completion` : 'All complete'}
+          change={openTasks > 0 ? `${openTasks} open tasks` : 'All tasks completed'}
           trend={openTasks > 0 ? 'neutral' : 'up'}
-          subtitle="Active items"
+          subtitle="Needs action"
         />
         <StatCard
           title="Completed Deliverables"
           value={doneTasks}
           icon={CheckCheck}
-          color="emerald"
           change={`${totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0}% completion`}
           trend="up"
           subtitle="Resolved tasks"
         />
       </div>
 
-      {/* Filter and Control Bar */}
-      <GlassCard padding="sm" className="space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Search task description */}
+      {/* Filter and Search Bar */}
+      <GlassCard padding="sm" className="space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Search Input */}
           <div className="relative flex-1 max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#718096]">
               <Search className="w-4 h-4" />
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search deliverables by keyword..."
-              className="w-full h-10 pl-10 pr-4 rounded-xl bg-[#081220]/70 border border-white/10 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+              placeholder="Search deliverables by description..."
+              className="w-full h-9 pl-9 pr-4 rounded-xl bg-white border border-[#648296]/20 text-xs sm:text-sm text-[#172B3A] placeholder-[#718096] focus:outline-none focus:border-[#168AAD] focus:ring-2 focus:ring-[#168AAD]/15 shadow-[inset_0_1px_1.5px_rgba(23,43,58,0.025)] transition-all"
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Status Segmented Buttons */}
-            <div className="flex items-center rounded-xl bg-[#081220]/80 p-1 border border-white/10">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Status Filter */}
+            <div className="flex items-center gap-1 bg-[#EAF1F6]/70 p-1 rounded-xl border border-[#648296]/14 text-xs font-medium shadow-[inset_0_1px_2px_rgba(23,43,58,0.04)]">
               {(['ALL', 'OPEN', 'DONE'] as const).map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    statusFilter === status
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
+                  className={`
+                    px-2.5 py-1 rounded-lg transition-colors cursor-pointer text-xs
+                    ${
+                      statusFilter === status
+                        ? 'bg-white text-[#172B3A] font-semibold shadow-[0_1px_2px_rgba(23,43,58,0.06),inset_0_1px_0_0_#ffffff]'
+                        : 'text-[#5A6E7F] hover:text-[#172B3A]'
+                    }
+                  `}
                 >
-                  {status === 'ALL' ? 'All' : status === 'OPEN' ? 'Open' : 'Done'}
+                  {status === 'ALL' ? 'All' : status === 'OPEN' ? 'Pending' : 'Done'}
                 </button>
               ))}
             </div>
 
             {/* Assignee Filter Dropdown */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <User className="w-3.5 h-3.5" />
-              </div>
+            {assignees.length > 0 && (
               <select
                 value={assigneeFilter}
                 onChange={(e) => setAssigneeFilter(e.target.value)}
-                className="h-10 pl-9 pr-8 rounded-xl bg-[#081220]/80 border border-white/10 text-xs text-white focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 appearance-none cursor-pointer"
+                className="h-9 px-3 rounded-xl bg-white border border-[#648296]/20 text-xs text-[#172B3A] focus:outline-none focus:border-[#168AAD] shadow-[inset_0_1px_1.5px_rgba(23,43,58,0.025)] cursor-pointer"
               >
                 <option value="ALL">All Assignees</option>
-                {assignees.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
+                {assignees.map(name => (
+                  <option key={name} value={name}>{name}</option>
                 ))}
               </select>
-            </div>
+            )}
           </div>
         </div>
       </GlassCard>
 
       {/* Action Items List */}
-      <div className="space-y-3">
-        {filteredItems.length === 0 ? (
-          <EmptyState
-            icon={ListTodo}
-            title={searchQuery || statusFilter !== 'ALL' || assigneeFilter !== 'ALL' ? 'No deliverables match filters' : 'No action items yet'}
-            description={
-              searchQuery || statusFilter !== 'ALL' || assigneeFilter !== 'ALL'
-                ? 'Try clearing your filters or search keywords to view other action items.'
-                : 'Analyze a new meeting to have Extractor Agent identify tasks, assignees, and deadlines.'
-            }
-            actionLabel="Analyze New Meeting"
-            onAction={() => window.location.href = '/meetings/new'}
-          />
-        ) : (
-          filteredItems.map((item) => (
-            <GlassCard
+      {filteredItems.length === 0 ? (
+        <EmptyState
+          icon={ListTodo}
+          title={searchQuery || statusFilter !== 'ALL' ? 'No matching deliverables' : 'No action items yet'}
+          description={
+            searchQuery || statusFilter !== 'ALL'
+              ? 'No tasks match your active filters. Try resetting the search or filter options.'
+              : 'Action items will be extracted automatically when you analyze meeting transcripts.'
+          }
+          actionLabel={searchQuery || statusFilter !== 'ALL' ? 'Reset Filters' : 'New Meeting'}
+          onAction={() => {
+            setSearchQuery('')
+            setStatusFilter('ALL')
+            setAssigneeFilter('ALL')
+          }}
+        />
+      ) : (
+        <div className="space-y-3">
+          {filteredItems.map((item) => (
+            <div
               key={item.id}
-              padding="sm"
-              className={`flex items-start gap-4 transition-all group ${
-                item.status === 'DONE' ? 'opacity-70 border-white/[0.04]' : 'hover:border-cyan-500/30'
-              }`}
+              className={`
+                group relative overflow-hidden p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-white/95 to-white/85 border border-[#648296]/16 shadow-[0_1px_3px_rgba(23,43,58,0.03),0_6px_16px_-4px_rgba(23,43,58,0.04),inset_0_1px_0_0_rgba(255,255,255,0.95)] hover:shadow-[0_8px_20px_-3px_rgba(23,43,58,0.07),inset_0_1px_0_0_rgba(255,255,255,1)] hover:border-[#168AAD]/30 hover:-translate-y-0.5 transition-all duration-200
+                flex flex-col sm:flex-row sm:items-center justify-between gap-4
+                ${item.status === 'DONE' ? 'opacity-80' : ''}
+              `}
             >
-              {/* Checkbox */}
-              <button
-                onClick={() => toggleStatus(item.id, item.status)}
-                className="mt-1 flex-shrink-0 text-slate-400 hover:text-cyan-400 transition-colors cursor-pointer"
-                aria-label={item.status === 'OPEN' ? 'Mark as done' : 'Reopen'}
-              >
-                {item.status === 'DONE' ? (
-                  <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                ) : (
-                  <Circle className="w-6 h-6 hover:text-cyan-400" />
-                )}
-              </button>
-
-              {/* Task Details */}
-              <div className="flex-1 min-w-0 space-y-1.5">
-                <p
-                  className={`text-sm sm:text-base font-semibold leading-relaxed ${
-                    item.status === 'DONE' ? 'line-through text-slate-400' : 'text-white'
-                  }`}
+              {/* Top subtle light reflection */}
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent pointer-events-none" />
+              <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                <button
+                  onClick={() => toggleStatus(item.id, item.status)}
+                  className="mt-0.5 text-[#718096] hover:text-emerald-600 transition-colors cursor-pointer flex-shrink-0"
+                  title={item.status === 'DONE' ? 'Mark as Pending' : 'Mark as Done'}
+                  aria-label={item.status === 'DONE' ? 'Mark as Pending' : 'Mark as Done'}
                 >
-                  {item.description}
-                </p>
+                  {item.status === 'DONE' ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-[#718096] group-hover:text-emerald-600" />
+                  )}
+                </button>
 
-                {item.context && (
-                  <p className="text-xs text-slate-400 leading-normal">
-                    {item.context}
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <p className={`text-sm sm:text-base font-semibold leading-snug ${
+                    item.status === 'DONE' ? 'line-through text-[#718096]' : 'text-[#172B3A]'
+                  }`}>
+                    {item.description}
                   </p>
-                )}
 
-                {/* Metadata Pills */}
-                <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                  {item.assignee && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-semibold">
-                      <User className="w-3 h-3" />
-                      {item.assignee}
-                    </span>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-[#5A6E7F]">
+                    {item.assignee && (
+                      <span className="flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-[#718096]" />
+                        <span>{item.assignee}</span>
+                      </span>
+                    )}
+
+                    {item.dueDate && (
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#718096]" />
+                        <span>Due: <strong className="text-[#172B3A]">{item.dueDate}</strong></span>
+                      </span>
+                    )}
+
+                    {item.meetingId && (
+                      <Link
+                        to={`/meetings/${item.meetingId}`}
+                        className="text-[#168AAD] hover:underline"
+                      >
+                        View meeting
+                      </Link>
+                    )}
+                  </div>
+
+                  {item.context && (
+                    <p className="text-xs text-[#718096] italic bg-[#F4F7FA] p-2.5 rounded-lg border border-[#648296]/10 mt-1 max-w-2xl">
+                      "{item.context}"
+                    </p>
                   )}
-
-                  {item.dueDate && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-white/[0.05] border border-white/10 text-slate-300 font-mono">
-                      <Clock className="w-3 h-3 text-cyan-400" />
-                      Due: {item.dueDate}
-                    </span>
-                  )}
-
-                  <span className="text-white/20">•</span>
-
-                  <Link
-                    to={`/meetings/${item.meetingId}`}
-                    className="inline-flex items-center gap-1.5 text-slate-400 hover:text-cyan-300 transition-colors font-medium truncate max-w-[240px]"
-                  >
-                    <Video className="w-3 h-3 text-cyan-400" />
-                    <span className="truncate">{item.meetingTitle || 'Meeting Details'}</span>
-                  </Link>
                 </div>
               </div>
-            </GlassCard>
-          ))
-        )}
-      </div>
+
+              <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#648296]/10">
+                <button
+                  onClick={() => toggleStatus(item.id, item.status)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
+                    item.status === 'DONE'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                      : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                  }`}
+                >
+                  {item.status === 'DONE' ? 'Completed' : 'Mark Done'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
