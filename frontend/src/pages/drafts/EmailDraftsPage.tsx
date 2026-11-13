@@ -5,16 +5,12 @@ import {
   Mail,
   Copy,
   Check,
-  Clock,
-  Sparkles,
-  ExternalLink,
-  ChevronRight,
-  Inbox
+  Calendar,
+  ExternalLink
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { GlassCard } from '../../components/common/GlassCard'
 import { Button } from '../../components/common/Button'
-import { Badge } from '../../components/common/Badge'
 import { EmptyState } from '../../components/common/EmptyState'
 import { PageSkeleton } from '../../components/common/LoadingSkeleton'
 
@@ -49,19 +45,14 @@ export function EmailDraftsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-md">
-            <Mail className="w-5 h-5" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Follow-up Email Drafts
-          </h1>
-        </div>
-        <p className="text-sm text-slate-400 mt-1">
-          Review, copy, and send AI-generated executive follow-up communications drafted from meeting action items.
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#172B3A] tracking-tight">
+          Follow-up Email Drafts
+        </h1>
+        <p className="text-xs sm:text-sm text-[#5A6E7F] mt-1">
+          Review, copy, and send follow-up communications drafted from meeting action items.
         </p>
       </div>
 
@@ -69,21 +60,19 @@ export function EmailDraftsPage() {
         <EmptyState
           icon={Mail}
           title="No follow-up drafts generated yet"
-          description="When your meetings are analyzed by the 4-agent pipeline, Drafter Agent creates polished follow-up emails ready to be copied or sent."
-          actionLabel="Analyze New Meeting"
+          description="When meetings are analyzed, polished follow-up email drafts will appear here ready to review and copy."
+          actionLabel="New Meeting"
           onAction={() => window.location.href = '/meetings/new'}
         />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[550px]">
           {/* Left Column: List of Meetings with Drafts (4 cols) */}
-          <div className="lg:col-span-4 space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Generated Drafts ({completedMeetings.length})
-              </span>
+          <div className="lg:col-span-4 space-y-2.5">
+            <div className="px-1 text-xs font-bold uppercase tracking-wider text-[#718096]">
+              Meetings with Drafts ({completedMeetings.length})
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {completedMeetings.map((m) => {
                 const isActive = m.id === activeMeetingId
                 return (
@@ -91,29 +80,26 @@ export function EmailDraftsPage() {
                     key={m.id}
                     onClick={() => setSelectedMeetingId(m.id)}
                     className={`
-                      w-full text-left p-4 rounded-2xl transition-all duration-200 border cursor-pointer
+                      w-full text-left p-4 rounded-xl transition-all duration-150 border cursor-pointer
                       ${
                         isActive
-                          ? 'bg-[#0e223d]/90 border-cyan-500/40 shadow-lg shadow-cyan-950/40'
-                          : 'bg-[#0b1728]/60 hover:bg-[#0b1728]/90 border-white/[0.08] hover:border-white/20'
+                          ? 'bg-gradient-to-r from-white to-[#EAF1F6]/50 border-[#168AAD] shadow-[0_2px_8px_-2px_rgba(20,123,155,0.18),inset_0_1px_0_0_#ffffff] ring-1 ring-[#168AAD]/30 font-semibold'
+                          : 'bg-white/75 hover:bg-white border-[#648296]/14 shadow-[0_1px_2px_rgba(23,43,58,0.02),inset_0_1px_0_0_rgba(255,255,255,0.8)] hover:shadow-sm hover:border-[#648296]/25'
                       }
                     `}
                   >
-                    <div className="flex items-center justify-between text-xs text-slate-400 mb-1.5 font-mono">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-cyan-400" />
-                        {new Date(m.createdAt).toLocaleDateString()}
+                    <h3 className={`text-sm font-semibold truncate ${isActive ? 'text-[#168AAD]' : 'text-[#172B3A]'}`}>
+                      {m.title}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1.5 text-xs text-[#718096]">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>
+                        {new Date(m.createdAt).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
                       </span>
-                      <span className="text-emerald-400 font-sans font-medium">Ready</span>
-                    </div>
-
-                    <h4 className="font-bold text-white text-sm line-clamp-1 mb-2">
-                      {m.title || 'Untitled Meeting'}
-                    </h4>
-
-                    <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/[0.06]">
-                      <span className="text-[11px] text-cyan-300 font-medium">Drafter Agent #3</span>
-                      <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-1 text-cyan-400' : ''}`} />
                     </div>
                   </button>
                 )
@@ -121,89 +107,71 @@ export function EmailDraftsPage() {
             </div>
           </div>
 
-          {/* Right Column: Email Client / Editor View (8 cols) */}
+          {/* Right Column: Active Draft Preview (8 cols) */}
           <div className="lg:col-span-8">
-            <GlassCard padding="none" className="h-full flex flex-col justify-between overflow-hidden">
-              {detailLoading ? (
-                <div className="p-10 space-y-4">
-                  <div className="h-8 w-64 bg-white/5 rounded-xl animate-pulse" />
-                  <div className="h-4 w-40 bg-white/5 rounded-xl animate-pulse" />
-                  <div className="h-64 w-full bg-white/5 rounded-2xl animate-pulse" />
-                </div>
-              ) : draft ? (
-                <>
-                  {/* Top Bar of Editor */}
-                  <div className="p-6 border-b border-white/[0.08] bg-white/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="cyan" size="sm">Follow-up Draft</Badge>
-                        <span className="text-xs text-slate-400">
-                          From "{meetingDetail?.title}"
-                        </span>
-                      </div>
-                      <h2 className="text-lg font-bold text-white tracking-tight">
-                        {draft.subject}
-                      </h2>
-                    </div>
+            {detailLoading ? (
+              <GlassCard className="h-full flex items-center justify-center p-12">
+                <p className="text-xs text-[#718096]">Loading email draft...</p>
+              </GlassCard>
+            ) : !draft ? (
+              <GlassCard className="h-full flex items-center justify-center p-12 text-center text-[#718096] text-xs">
+                <p>No draft generated for this meeting yet.</p>
+              </GlassCard>
+            ) : (
+              <GlassCard padding="none" className="h-full flex flex-col overflow-hidden">
+                {/* Draft Action Bar */}
+                <div className="p-5 sm:p-6 border-b border-[#648296]/14 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#EAF1F6]/40">
+                  <div>
+                    <span className="text-[10px] font-bold text-[#168AAD] uppercase tracking-wider block">
+                      Meeting Follow-up
+                    </span>
+                    <h2 className="text-base sm:text-lg font-bold text-[#172B3A] line-clamp-1">
+                      {meetingDetail?.title}
+                    </h2>
+                  </div>
 
-                    <div className="flex items-center gap-2">
-                      <Link to={`/meetings/${meetingDetail?.id}`}>
-                        <Button variant="secondary" size="sm" icon={ExternalLink}>
-                          Meeting
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        icon={copied ? Check : Copy}
-                        onClick={handleCopy}
-                      >
-                        {copied ? 'Copied to Clipboard' : 'Copy Email'}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon={copied ? Check : Copy}
+                      onClick={handleCopy}
+                    >
+                      {copied ? 'Copied to Clipboard' : 'Copy Draft'}
+                    </Button>
+
+                    <Link to={`/meetings/${activeMeetingId}`}>
+                      <Button variant="secondary" size="sm" icon={ExternalLink}>
+                        Open Meeting
                       </Button>
-                    </div>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Email Content Canvas */}
+                <div className="p-6 sm:p-8 flex-1 space-y-6 overflow-y-auto custom-scrollbar bg-white">
+                  {/* Subject Line */}
+                  <div className="space-y-1 pb-4 border-b border-[#648296]/14">
+                    <span className="text-xs font-semibold text-[#718096] uppercase tracking-wider">
+                      Subject
+                    </span>
+                    <p className="text-sm sm:text-base font-bold text-[#172B3A]">
+                      {draft.subject || 'Meeting Summary & Action Items'}
+                    </p>
                   </div>
 
-                  {/* Recipient suggestions */}
-                  <div className="px-6 py-3 border-b border-white/[0.06] bg-[#07101d] flex flex-wrap items-center gap-2 text-xs">
-                    <span className="font-semibold text-slate-400">Suggested Recipients:</span>
-                    {draft.recipientSuggestions && draft.recipientSuggestions.length > 0 ? (
-                      draft.recipientSuggestions.map((rec, i) => (
-                        <span
-                          key={i}
-                          className="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 font-mono text-xs"
-                        >
-                          {rec}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-slate-400 italic">All meeting participants</span>
-                    )}
-                  </div>
-
-                  {/* Email Body Content */}
-                  <div className="p-6 sm:p-8 flex-1 bg-[#091424]/80 overflow-y-auto custom-scrollbar">
-                    <div className="prose prose-invert max-w-none text-sm sm:text-base leading-relaxed text-slate-200">
+                  {/* Body Content */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-semibold text-[#718096] uppercase tracking-wider block">
+                      Email Body
+                    </span>
+                    <div className="prose prose-slate max-w-none text-xs sm:text-sm text-[#172B3A] leading-relaxed p-4 rounded-xl bg-[#F4F7FA] border border-[#648296]/14 shadow-[inset_0_1px_2px_rgba(23,43,58,0.03)]">
                       <ReactMarkdown>{draft.body}</ReactMarkdown>
                     </div>
                   </div>
-
-                  {/* Footer status */}
-                  <div className="p-4 border-t border-white/[0.08] bg-[#07101d] flex items-center justify-between text-xs text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Drafted by Drafter Agent • Audited by Reviewer Agent</span>
-                    </div>
-                    <span className="font-mono">{draft.body ? `${draft.body.split(/\s+/).length} words` : ''}</span>
-                  </div>
-                </>
-              ) : (
-                <div className="p-16 text-center text-slate-400 flex flex-col items-center justify-center h-full">
-                  <Inbox className="w-12 h-12 text-slate-600 mb-3" />
-                  <p className="text-base font-semibold text-white">Select a meeting to view draft</p>
-                  <p className="text-xs text-slate-400 mt-1">Choose an analyzed meeting from the left list.</p>
                 </div>
-              )}
-            </GlassCard>
+              </GlassCard>
+            )}
           </div>
         </div>
       )}

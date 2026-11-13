@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { apiClient } from '../../api/client'
 import { useAuth } from '../../features/auth/AuthContext'
-import { ShieldCheck, AlertTriangle, ArrowRight, BrainCircuit } from 'lucide-react'
+import { ShieldCheck, AlertTriangle, ArrowRight, Sparkles } from 'lucide-react'
 import { GlassCard } from '../../components/common/GlassCard'
 import { Button } from '../../components/common/Button'
+import { formatDisplayName } from '../../utils/userGreeting'
 
 export function McpConnectPage() {
   const [searchParams] = useSearchParams()
@@ -17,6 +18,8 @@ export function McpConnectPage() {
   const codeChallenge = searchParams.get('code_challenge')
   const state = searchParams.get('state')
   const scope = searchParams.get('scope')
+
+  const displayName = formatDisplayName(user)
 
   const handleAuthorize = async () => {
     if (!clientId || !redirectUri || !codeChallenge || !state) {
@@ -57,14 +60,14 @@ export function McpConnectPage() {
 
   if (!clientId || !redirectUri) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#060d17] p-4">
-        <GlassCard className="max-w-md w-full border-rose-500/30 text-center p-8 space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto">
+      <div className="min-h-screen flex items-center justify-center bg-[#F4F7FA] p-4 text-[#172B3A]">
+        <GlassCard className="max-w-md w-full border-rose-300 text-center p-8 space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mx-auto">
             <AlertTriangle className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold text-white">Invalid Authorization Request</h2>
-          <p className="text-xs text-slate-400">
-            Missing required OAuth 2.0 PKCE parameters (client_id, redirect_uri, or code_challenge).
+          <h2 className="text-lg font-bold text-[#172B3A]">Invalid Connection Request</h2>
+          <p className="text-xs text-[#5A6E7F]">
+            Missing required authorization parameters (client_id, redirect_uri, or code_challenge).
           </p>
         </GlassCard>
       </div>
@@ -72,66 +75,63 @@ export function McpConnectPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#060d17] p-4 relative">
-      <div className="ambient-glow" />
-
+    <div className="min-h-screen flex items-center justify-center bg-[#F4F7FA] p-4 relative text-[#172B3A]">
       <div className="relative z-10 w-full max-w-md">
-        <GlassCard padding="lg" className="space-y-6 border-cyan-500/30 shadow-2xl shadow-cyan-950/40">
+        <GlassCard padding="lg" className="space-y-6 shadow-md border-[#648296]/20">
           {/* Logo & Header */}
           <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 mx-auto shadow-lg shadow-cyan-500/30">
-              <div className="w-full h-full bg-[#07111e] rounded-[14px] flex items-center justify-center">
-                <BrainCircuit className="w-7 h-7 text-cyan-400" />
-              </div>
+            <div className="w-12 h-12 rounded-xl bg-[#168AAD] text-white flex items-center justify-center mx-auto shadow-sm">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <h2 className="text-2xl font-extrabold text-white tracking-tight">
+            <h2 className="text-xl font-extrabold text-[#172B3A] tracking-tight">
               Connect to MeetingMind
             </h2>
-            <p className="text-xs text-slate-400">
-              The application <span className="font-semibold text-cyan-300 font-mono">{clientId}</span> is requesting access to your meeting intelligence data.
+            <p className="text-xs text-[#5A6E7F]">
+              The application <span className="font-semibold text-[#168AAD] font-mono">{clientId}</span> is requesting access to your meeting intelligence data.
             </p>
           </div>
 
-          {/* Scopes Box */}
-          <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          {/* Permissions Box */}
+          <div className="p-4 rounded-xl bg-[#F4F7FA] border border-[#648296]/16 space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#5A6E7F] flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
               <span>Requested Permissions</span>
             </h3>
-            <ul className="text-xs text-slate-300 space-y-2">
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                <span>Read & summarize your meeting transcripts</span>
+
+            <ul className="text-xs text-[#172B3A] space-y-2">
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#168AAD] mt-1.5 flex-shrink-0" />
+                <span>Read meeting titles, summaries, and key decisions</span>
               </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                <span>Extract, view, and mark action items as done</span>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#168AAD] mt-1.5 flex-shrink-0" />
+                <span>Read and update action-item completion statuses</span>
               </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                <span>Analyze team workload distribution</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                <span>Retrieve follow-up drafts and decision records</span>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#168AAD] mt-1.5 flex-shrink-0" />
+                <span>Calculate team workloads and view deadlines</span>
               </li>
             </ul>
           </div>
 
-          <div className="text-center text-xs text-slate-400">
-            Authorizing as <span className="font-bold text-white">{user?.email || user?.username}</span>
+          {/* User confirmation */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-[#EAF1F6]/70 border border-[#648296]/14 text-xs">
+            <span className="text-[#5A6E7F]">Authorizing as:</span>
+            <span className="font-semibold text-[#172B3A]">{displayName}</span>
           </div>
 
           {error && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
-              {error}
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2">
             <Button
               variant="secondary"
+              className="flex-1"
               onClick={handleDeny}
               disabled={isAuthorizing}
             >
@@ -139,12 +139,13 @@ export function McpConnectPage() {
             </Button>
             <Button
               variant="primary"
-              onClick={handleAuthorize}
-              loading={isAuthorizing}
+              className="flex-1"
               icon={ArrowRight}
               iconPosition="right"
+              onClick={handleAuthorize}
+              loading={isAuthorizing}
             >
-              Allow Access
+              Authorize
             </Button>
           </div>
         </GlassCard>

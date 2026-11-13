@@ -1,13 +1,11 @@
 import type { LucideIcon } from 'lucide-react'
-import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react'
 
 export interface StatCardProps {
   title: string
   value: string | number
   change?: string
   trend?: 'up' | 'down' | 'neutral'
-  icon: LucideIcon
-  color?: 'cyan' | 'blue' | 'emerald' | 'amber' | 'purple'
+  icon?: LucideIcon
   subtitle?: string
 }
 
@@ -17,76 +15,43 @@ export function StatCard({
   change,
   trend = 'neutral',
   icon: Icon,
-  color = 'cyan',
   subtitle
 }: StatCardProps) {
-  const colorStyles = {
-    cyan: {
-      iconBg: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/25',
-      glow: 'group-hover:border-cyan-500/40 group-hover:shadow-cyan-500/10',
-      accent: 'from-cyan-500 to-blue-500'
-    },
-    blue: {
-      iconBg: 'bg-blue-500/10 text-blue-400 border-blue-500/25',
-      glow: 'group-hover:border-blue-500/40 group-hover:shadow-blue-500/10',
-      accent: 'from-blue-500 to-indigo-500'
-    },
-    emerald: {
-      iconBg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
-      glow: 'group-hover:border-emerald-500/40 group-hover:shadow-emerald-500/10',
-      accent: 'from-emerald-500 to-teal-500'
-    },
-    amber: {
-      iconBg: 'bg-amber-500/10 text-amber-400 border-amber-500/25',
-      glow: 'group-hover:border-amber-500/40 group-hover:shadow-amber-500/10',
-      accent: 'from-amber-500 to-orange-500'
-    },
-    purple: {
-      iconBg: 'bg-purple-500/10 text-purple-400 border-purple-500/25',
-      glow: 'group-hover:border-purple-500/40 group-hover:shadow-purple-500/10',
-      accent: 'from-purple-500 to-pink-500'
-    }
-  }[color]
-
   return (
-    <div className={`
-      group relative rounded-2xl bg-[#0b1728]/70 backdrop-blur-xl border border-white/[0.08] p-5 sm:p-6
-      shadow-lg shadow-black/20 hover:-translate-y-1 hover:shadow-2xl transition-all duration-300
-      ${colorStyles.glow}
-    `}>
-      {/* Subtle top-edge reflection */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent rounded-t-2xl pointer-events-none" />
+    <div className="relative rounded-2xl bg-gradient-to-br from-white/96 via-white/88 to-white/82 backdrop-blur-md border border-[#648296]/16 p-5 sm:p-6 shadow-[0_1px_2px_rgba(23,43,58,0.025),0_6px_20px_-2px_rgba(23,43,58,0.045),inset_0_1px_0_0_rgba(255,255,255,0.95)] hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgba(23,43,58,0.03),0_12px_28px_-4px_rgba(23,43,58,0.075),inset_0_1px_0_0_#ffffff] hover:border-[#168AAD]/30 transition-all duration-200 ease-out">
+      {/* Top light reflection */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent rounded-t-2xl pointer-events-none" />
 
-      <div className="flex items-center justify-between gap-4 mb-4">
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <span className="text-xs font-semibold uppercase tracking-wider text-[#718096]">
           {title}
         </span>
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center border shadow-inner ${colorStyles.iconBg}`}>
-          <Icon className="w-5 h-5" />
-        </div>
+        {Icon && (
+          <div className="w-8 h-8 rounded-lg bg-slate-100/70 border border-slate-200/50 flex items-center justify-center text-[#5A6E7F] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)]">
+            <Icon className="w-4 h-4" />
+          </div>
+        )}
       </div>
 
-      <div className="space-y-1.5">
-        <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+      <div className="space-y-1">
+        <div className="text-2xl sm:text-3xl font-extrabold text-[#172B3A] tracking-tight">
           {value}
         </div>
-        
+
         {(change || subtitle) && (
-          <div className="flex items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-1.5 text-xs text-[#5A6E7F]">
             {change && (
-              <span className={`inline-flex items-center font-medium ${
-                trend === 'up' ? 'text-emerald-400' :
-                trend === 'down' ? 'text-rose-400' :
-                'text-slate-400'
+              <span className={`font-medium ${
+                trend === 'up' ? 'text-emerald-600' :
+                trend === 'down' ? 'text-rose-600' :
+                'text-[#5A6E7F]'
               }`}>
-                {trend === 'up' && <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />}
-                {trend === 'down' && <ArrowDownRight className="w-3.5 h-3.5 mr-0.5" />}
-                {trend === 'neutral' && <Minus className="w-3.5 h-3.5 mr-0.5" />}
                 {change}
               </span>
             )}
+            {change && subtitle && <span className="text-[#648296]/40">•</span>}
             {subtitle && (
-              <span className="text-slate-400 font-normal">
+              <span className="text-[#718096] truncate">
                 {subtitle}
               </span>
             )}

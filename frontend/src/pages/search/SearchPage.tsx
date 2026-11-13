@@ -2,20 +2,16 @@ import React, { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   Search,
-  Sparkles,
-  Database,
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  CheckCircle2,
   AlertCircle,
-  Bot,
-  Layers
+  HelpCircle,
+  RefreshCw
 } from 'lucide-react'
 import { ragApi } from '../../api/ragApi'
 import type { MeetingCitation, RagResponse } from '../../types/rag'
 import { GlassCard } from '../../components/common/GlassCard'
-import { Badge } from '../../components/common/Badge'
 import { Button } from '../../components/common/Button'
 import ReactMarkdown from 'react-markdown'
 
@@ -35,10 +31,10 @@ export function SearchPage() {
   const [indexMessage, setIndexMessage] = useState<string | null>(null)
 
   const suggestedQueries = [
-    'What decisions were made regarding authentication & database architecture?',
+    'What decisions were made regarding authentication and security?',
     'What tasks were assigned to Alex or Jordan?',
-    'What was discussed about project timeline and Phase 2?',
-    'What were the key takeaways from recent roadmap meetings?'
+    'What was discussed about project timeline and deliverables?',
+    'What were the key takeaways from recent review meetings?'
   ]
 
   const handleSearch = async (e?: React.FormEvent, customQuery?: string) => {
@@ -60,7 +56,7 @@ export function SearchPage() {
         setRagResult(null)
       }
     } catch (err: any) {
-      setError(err?.response?.data?.message || err?.message || 'Failed to retrieve information from RAG vector store')
+      setError(err?.response?.data?.message || err?.message || 'Failed to retrieve information from search index')
     } finally {
       setLoading(false)
     }
@@ -83,239 +79,193 @@ export function SearchPage() {
   const citationsToDisplay = mode === 'ask' && ragResult ? ragResult.citations : searchResults
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-200">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-md">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Historical Meeting Intelligence
-            </h1>
-          </div>
-          <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-            Query across all historical meetings using PostgreSQL pgvector semantic retrieval and grounded AI synthesis.
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#172B3A] tracking-tight">
+            Meeting Search
+          </h1>
+          <p className="text-xs sm:text-sm text-[#5A6E7F] mt-1 max-w-2xl">
+            Search and ask questions across all your meeting transcripts, decisions, and deliverables.
           </p>
         </div>
 
         <Button
           variant="secondary"
           size="sm"
-          icon={Database}
+          icon={RefreshCw}
           loading={indexing}
           onClick={handleIndexAll}
         >
-          {indexing ? 'Embedding...' : 'Index All Chunks'}
+          Sync Search Index
         </Button>
       </div>
 
       {indexMessage && (
-        <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs flex items-center gap-3">
-          <CheckCircle2 className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
           <span>{indexMessage}</span>
+          <button onClick={() => setIndexMessage(null)} className="text-emerald-700 hover:text-emerald-900 cursor-pointer font-bold">
+            ✕
+          </button>
         </div>
       )}
 
-      {/* Mode Switcher and Search Console */}
-      <GlassCard padding="lg" className="space-y-6">
-        {/* Mode Toggle */}
-        <div className="flex items-center gap-2 p-1 rounded-xl bg-[#081220] border border-white/10 w-fit">
-          <button
-            type="button"
-            onClick={() => {
-              setMode('ask')
-              setSearchResults([])
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-              mode === 'ask'
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-950/40'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Ask AI (Grounded Synthesis)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setMode('search')
-              setRagResult(null)
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-              mode === 'search'
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-950/40'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Search className="w-3.5 h-3.5" />
-            <span>Semantic Search (Direct Chunks)</span>
-          </button>
-        </div>
-
-        {/* Input Form */}
-        <form onSubmit={(e) => handleSearch(e)} className="relative flex items-center">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-            <Search className="w-5 h-5 text-cyan-400" />
-          </div>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={
-              mode === 'ask'
-                ? 'Ask any question across your meetings (e.g. What were our decisions on Kafka and Redis?)...'
-                : 'Search raw historical transcript chunks by concept...'
-            }
-            className="w-full h-14 pl-12 pr-32 rounded-2xl bg-[#081220]/80 border border-white/10 text-sm sm:text-base text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/20 transition-all shadow-inner"
-          />
-          <div className="absolute inset-y-0 right-2 flex items-center">
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              loading={loading}
-              disabled={!query.trim()}
+      {/* Search Input Box */}
+      <GlassCard padding="lg">
+        <form onSubmit={handleSearch} className="space-y-4">
+          {/* Mode Switcher */}
+          <div className="flex items-center gap-2 p-1 bg-[#EAF1F6]/70 rounded-xl border border-[#648296]/14 shadow-[inset_0_1px_2px_rgba(23,43,58,0.04)] w-fit">
+            <button
+              type="button"
+              onClick={() => { setMode('ask'); setRagResult(null); setSearchResults([]); }}
+              className={`
+                px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer
+                ${mode === 'ask' ? 'bg-white text-[#168AAD] shadow-[0_1px_2px_rgba(23,43,58,0.06),inset_0_1px_0_0_#ffffff]' : 'text-[#5A6E7F] hover:text-[#172B3A]'}
+              `}
             >
-              {mode === 'ask' ? 'Synthesize' : 'Search'}
-            </Button>
+              Ask About Meetings
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('search'); setRagResult(null); setSearchResults([]); }}
+              className={`
+                px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer
+                ${mode === 'search' ? 'bg-white text-[#168AAD] shadow-[0_1px_2px_rgba(23,43,58,0.06),inset_0_1px_0_0_#ffffff]' : 'text-[#5A6E7F] hover:text-[#172B3A]'}
+              `}
+            >
+              Search Transcripts
+            </button>
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#718096]">
+              <Search className="w-5 h-5" />
+            </div>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={
+                mode === 'ask'
+                  ? 'Ask any question about your past meetings and decisions...'
+                  : 'Search transcripts by keywords or phrases...'
+              }
+              className="w-full h-11 pl-11 pr-28 rounded-xl bg-white border border-[#648296]/24 text-sm text-[#172B3A] placeholder-[#718096] focus:outline-none focus:border-[#168AAD] focus:ring-2 focus:ring-[#168AAD]/15 shadow-[inset_0_1px_2px_rgba(23,43,58,0.03)] transition-all"
+            />
+            <div className="absolute inset-y-1.5 right-1.5 flex items-center">
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                loading={loading}
+                disabled={!query.trim()}
+              >
+                Search
+              </Button>
+            </div>
+          </div>
+
+          {/* Suggested Queries */}
+          <div className="space-y-1.5 pt-1">
+            <span className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">
+              Example Questions:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {suggestedQueries.map((suggested, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setQuery(suggested)
+                    handleSearch(undefined, suggested)
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-white/80 hover:bg-white border border-[#648296]/16 text-xs text-[#5A6E7F] hover:text-[#172B3A] shadow-[0_1px_2px_rgba(23,43,58,0.02),inset_0_1px_0_0_rgba(255,255,255,0.9)] hover:shadow-xs transition-all cursor-pointer text-left"
+                >
+                  "{suggested}"
+                </button>
+              ))}
+            </div>
           </div>
         </form>
-
-        {/* Query Suggestions */}
-        <div className="space-y-2 pt-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-            Suggested Cross-Meeting Prompts
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {suggestedQueries.map((suggested, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  setQuery(suggested)
-                  handleSearch(undefined, suggested)
-                }}
-                className="text-left px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-cyan-500/10 border border-white/10 hover:border-cyan-500/30 text-xs text-slate-300 hover:text-cyan-300 transition-all"
-              >
-                "{suggested}"
-              </button>
-            ))}
-          </div>
-        </div>
       </GlassCard>
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0" />
-          <span>{error}</span>
-        </div>
+        <GlassCard className="border-rose-300 bg-rose-50/60 text-rose-800">
+          <div className="flex items-center gap-2 mb-1">
+            <AlertCircle className="w-4 h-4 text-rose-600" />
+            <h3 className="text-sm font-bold">Search query failed</h3>
+          </div>
+          <p className="text-xs text-rose-700">{error}</p>
+        </GlassCard>
       )}
 
-      {/* Synthesis Answer Result */}
+      {/* Answer View */}
       {mode === 'ask' && ragResult && (
-        <GlassCard padding="lg" className="space-y-6 border-cyan-500/30 shadow-2xl">
-          <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-                <Bot className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white text-base">Grounded AI Synthesis</h3>
-                <p className="text-xs text-slate-400">Answer derived strictly from meeting transcripts</p>
-              </div>
-            </div>
-            <Badge variant="cyan" size="sm">Grounded</Badge>
+        <GlassCard padding="lg" className="space-y-4">
+          <div className="flex items-center gap-2 pb-3 border-b border-[#648296]/14">
+            <HelpCircle className="w-4 h-4 text-[#168AAD]" />
+            <h2 className="text-base font-bold text-[#172B3A]">Answer</h2>
           </div>
 
-          <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed text-sm sm:text-base">
+          <div className="prose prose-slate max-w-none text-xs sm:text-sm text-[#172B3A] leading-relaxed">
             <ReactMarkdown>{ragResult.answer}</ReactMarkdown>
           </div>
         </GlassCard>
       )}
 
-      {/* Citations / Excerpts Section */}
-      {citationsToDisplay.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-white text-base flex items-center gap-2">
-              <Layers className="w-4 h-4 text-cyan-400" />
-              <span>Grounded Citations & Transcript Excerpts ({citationsToDisplay.length})</span>
-            </h3>
-            <span className="text-xs text-slate-400">Ranked by Cosine Similarity</span>
+      {/* Sources & Citations */}
+      {citationsToDisplay && citationsToDisplay.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#718096]">
+              Referenced Discussions ({citationsToDisplay.length})
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-2.5">
             {citationsToDisplay.map((citation, idx) => {
               const isExpanded = expandedCitation === idx
-              const similarityPct = Math.round((citation.similarityScore || 0) * 100)
-
               return (
-                <GlassCard
-                  key={idx}
-                  padding="md"
-                  className="space-y-3 hover:border-cyan-500/30 transition-all"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 flex items-center justify-center text-xs font-bold font-mono">
-                        #{idx + 1}
+                <GlassCard key={idx} padding="none" className="overflow-hidden">
+                  <div
+                    onClick={() => setExpandedCitation(isExpanded ? null : idx)}
+                    className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-6 h-6 rounded-lg bg-[#EAF1F6] text-[#168AAD] font-bold text-xs flex items-center justify-center flex-shrink-0">
+                        {idx + 1}
                       </span>
-                      <Link
-                        to={citation.meetingId ? `/meetings/${citation.meetingId}` : '#'}
-                        className="font-bold text-white hover:text-cyan-400 text-sm sm:text-base transition-colors flex items-center gap-1.5"
-                      >
-                        <span>{citation.meetingTitle || 'Meeting Reference'}</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </Link>
+                      <div className="min-w-0">
+                        <h4 className="text-sm font-semibold text-[#172B3A] truncate">
+                          {citation.meetingTitle || 'Meeting Transcript'}
+                        </h4>
+                        <p className="text-xs text-[#718096] truncate">
+                          Relevant discussion excerpt
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
-                      {citation.similarityScore != null && (
-                        <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-mono font-semibold">
-                          {similarityPct}% match
-                        </span>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {citation.meetingId && (
+                        <Link
+                          to={`/meetings/${citation.meetingId}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-xs text-[#168AAD] hover:underline flex items-center gap-1"
+                        >
+                          <span>Open meeting</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </Link>
                       )}
-                      {citation.meetingDate && (
-                        <span className="font-mono">{citation.meetingDate}</span>
-                      )}
+                      {isExpanded ? <ChevronUp className="w-4 h-4 text-[#718096]" /> : <ChevronDown className="w-4 h-4 text-[#718096]" />}
                     </div>
                   </div>
 
-                  {/* Chunk text excerpt */}
-                  <div className="p-4 rounded-xl bg-[#081220] border border-white/5 text-xs sm:text-sm text-slate-300 font-mono leading-relaxed">
-                    {isExpanded ? citation.excerpt : `${(citation.excerpt || '').slice(0, 300)}...`}
-                  </div>
-
-                  <div className="flex justify-between items-center text-xs pt-1">
-                    <button
-                      onClick={() => setExpandedCitation(isExpanded ? null : idx)}
-                      className="text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1 cursor-pointer"
-                    >
-                      {isExpanded ? (
-                        <>
-                          <span>Show Less</span>
-                          <ChevronUp className="w-3.5 h-3.5" />
-                        </>
-                      ) : (
-                        <>
-                          <span>Expand Full Excerpt</span>
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </>
-                      )}
-                    </button>
-
-                    {citation.meetingId && (
-                      <Link
-                        to={`/meetings/${citation.meetingId}`}
-                        className="text-slate-400 hover:text-white transition-colors"
-                      >
-                        Open Full Meeting Details →
-                      </Link>
-                    )}
-                  </div>
+                  {isExpanded && (
+                    <div className="p-4 border-t border-[#648296]/14 bg-[#F4F7FA] text-xs text-[#172B3A] leading-relaxed font-sans">
+                      <p className="whitespace-pre-wrap">{citation.excerpt}</p>
+                    </div>
+                  )}
                 </GlassCard>
               )
             })}

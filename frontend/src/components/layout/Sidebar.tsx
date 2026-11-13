@@ -5,17 +5,18 @@ import {
   Video,
   ListTodo,
   Mail,
-  Sparkles,
+  Search,
   Calendar,
-  Cpu,
+  Layers,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
-  BrainCircuit,
-  Plus
+  Plus,
+  Sparkles
 } from 'lucide-react'
 import { useAuth } from '../../features/auth/AuthContext'
+import { formatDisplayName } from '../../utils/userGreeting'
 
 interface SidebarProps {
   collapsed: boolean
@@ -28,7 +29,6 @@ interface NavItem {
   label: string
   path: string
   icon: React.ComponentType<{ className?: string }>
-  badge?: string
 }
 
 export function Sidebar({
@@ -39,10 +39,11 @@ export function Sidebar({
 }: SidebarProps) {
   const location = useLocation()
   const { user, logout } = useAuth()
+  const displayName = formatDisplayName(user)
 
   const navGroups: { group: string; items: NavItem[] }[] = [
     {
-      group: 'Overview & Operations',
+      group: 'Workspace',
       items: [
         { label: 'Overview', path: '/', icon: LayoutDashboard },
         { label: 'Meetings', path: '/meetings', icon: Video },
@@ -53,13 +54,13 @@ export function Sidebar({
     {
       group: 'Intelligence & Tools',
       items: [
-        { label: 'Historical Search', path: '/search', icon: Sparkles, badge: 'RAG' },
-        { label: 'Calendar Schedule', path: '/calendar', icon: Calendar },
-        { label: 'MCP Integrations', path: '/mcp', icon: Cpu, badge: 'v1.0' }
+        { label: 'Meeting Search', path: '/search', icon: Search },
+        { label: 'Schedule Calendar', path: '/calendar', icon: Calendar },
+        { label: 'Integrations', path: '/mcp', icon: Layers }
       ]
     },
     {
-      group: 'System',
+      group: 'Account',
       items: [
         { label: 'Settings', path: '/settings', icon: Settings }
       ]
@@ -72,26 +73,21 @@ export function Sidebar({
   }
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-[#081220]/95 backdrop-blur-2xl border-r border-white/[0.08] text-slate-300 relative select-none">
+    <div className="flex flex-col h-full bg-[#EAF2F7] border-r border-[#648296]/16 text-[#172B3A] select-none">
       {/* Brand Header */}
-      <div className={`h-20 flex items-center px-5 border-b border-white/[0.08] ${collapsed ? 'justify-center' : 'justify-between'}`}>
+      <div className={`h-16 flex items-center px-4 border-b border-[#648296]/16 ${collapsed ? 'justify-center' : 'justify-between'}`}>
         <Link to="/" onClick={onCloseMobile} className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-sky-500 to-blue-600 p-0.5 shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/35 transition-all">
-            <div className="w-full h-full bg-[#07101d] rounded-[10px] flex items-center justify-center">
-              <BrainCircuit className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
-            </div>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-b from-[#1898bd] to-[#147b9b] text-white flex items-center justify-center shadow-[0_2px_6px_rgba(20,123,155,0.25),inset_0_1px_0_0_rgba(255,255,255,0.3)] group-hover:from-[#199ec5] group-hover:to-[#126f8c] transition-colors">
+            <Sparkles className="w-4 h-4 text-white" />
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-base tracking-tight text-white group-hover:text-cyan-400 transition-colors">
-                  MeetingMind
-                </span>
-                <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  AI
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-400 font-medium">Meeting Intelligence</span>
+              <span className="font-bold text-base tracking-tight text-[#172B3A] group-hover:text-[#168AAD] transition-colors">
+                MeetingMind
+              </span>
+              <span className="text-[11px] text-[#5A6E7F] font-medium leading-none">
+                Meeting Intelligence
+              </span>
             </div>
           )}
         </Link>
@@ -99,42 +95,42 @@ export function Sidebar({
         {/* Desktop Collapse Toggle */}
         <button
           onClick={onToggleCollapse}
-          className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors"
+          className="hidden lg:flex p-1.5 rounded-lg text-[#5A6E7F] hover:text-[#172B3A] hover:bg-black/[0.04] transition-colors cursor-pointer"
           title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          aria-label={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
       </div>
 
       {/* Quick Action Button */}
-      <div className={`px-4 pt-4 pb-2 ${collapsed ? 'px-2' : ''}`}>
+      <div className={`p-3 ${collapsed ? 'px-2' : ''}`}>
         <Link
           to="/meetings/new"
           onClick={onCloseMobile}
           className={`
-            w-full flex items-center justify-center rounded-xl font-semibold transition-all duration-200
-            bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 text-white
-            shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/35 hover:from-cyan-400 hover:to-blue-500
-            border border-cyan-400/30 active:scale-[0.98]
-            ${collapsed ? 'h-11 p-0' : 'py-2.5 px-4 gap-2 text-sm'}
+            w-full flex items-center justify-center rounded-xl font-medium transition-all duration-150
+            bg-gradient-to-b from-[#1898bd] to-[#147b9b] hover:from-[#199ec5] hover:to-[#126f8c] text-white
+            shadow-[0_1px_3px_rgba(20,123,155,0.2),inset_0_1px_0_0_rgba(255,255,255,0.25)] border border-[#147b9b]/80 active:scale-[0.98]
+            ${collapsed ? 'h-10 p-0' : 'py-2 px-3 gap-2 text-sm'}
           `}
-          title="New Meeting Analysis"
+          title="New Meeting"
         >
           <Plus className="w-4 h-4" />
-          {!collapsed && <span>New Analysis</span>}
+          {!collapsed && <span>New Meeting</span>}
         </Link>
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto custom-scrollbar">
+      {/* Navigation Links (Scrollable if viewport is small) */}
+      <nav className="flex-1 px-2.5 py-2 space-y-5 overflow-y-auto custom-scrollbar">
         {navGroups.map((group, idx) => (
           <div key={idx} className="space-y-1">
             {!collapsed && (
-              <div className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[#718096]">
                 {group.group}
               </div>
             )}
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {group.items.map((item) => {
                 const Icon = item.icon
                 const active = isItemActive(item.path)
@@ -145,28 +141,21 @@ export function Sidebar({
                     onClick={onCloseMobile}
                     title={collapsed ? item.label : undefined}
                     className={`
-                      relative flex items-center rounded-xl text-sm font-medium transition-all duration-200 group
-                      ${collapsed ? 'justify-center h-11 px-0' : 'px-3.5 py-2.5 gap-3'}
+                      relative flex items-center rounded-lg text-sm font-medium transition-all duration-150 group
+                      ${collapsed ? 'justify-center h-10 px-0' : 'px-3 py-2 gap-3'}
                       ${
                         active
-                          ? 'bg-gradient-to-r from-cyan-500/15 via-sky-500/10 to-transparent text-cyan-300 border border-cyan-500/30 shadow-md shadow-cyan-950/20'
-                          : 'text-slate-400 hover:text-white hover:bg-white/[0.05] border border-transparent'
+                          ? 'bg-gradient-to-r from-[#168AAD]/14 to-[#168AAD]/6 text-[#168AAD] font-semibold shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6)]'
+                          : 'text-[#5A6E7F] hover:text-[#172B3A] hover:bg-black/[0.04]'
                       }
                     `}
                   >
                     {active && (
-                      <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]" />
+                      <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-[#168AAD]" />
                     )}
-                    <Icon className={`w-5 h-5 flex-shrink-0 transition-colors ${active ? 'text-cyan-400' : 'text-slate-400 group-hover:text-slate-200'}`} />
+                    <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${active ? 'text-[#168AAD]' : 'text-[#5A6E7F] group-hover:text-[#172B3A]'}`} />
                     {!collapsed && (
-                      <div className="flex-1 flex items-center justify-between min-w-0">
-                        <span className="truncate">{item.label}</span>
-                        {item.badge && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
-                            {item.badge}
-                          </span>
-                        )}
-                      </div>
+                      <span className="truncate">{item.label}</span>
                     )}
                   </Link>
                 )
@@ -176,25 +165,24 @@ export function Sidebar({
         ))}
       </nav>
 
-      {/* User Card & Logout */}
-      <div className="p-3 border-t border-white/[0.08]">
+      {/* User Card & Logout (Anchored at Bottom) */}
+      <div className="p-3 border-t border-[#648296]/16 mt-auto">
         <div className={`
-          flex items-center rounded-xl p-2.5 bg-white/[0.03] border border-white/[0.06] backdrop-blur-md
-          ${collapsed ? 'justify-center' : 'justify-between gap-3'}
+          flex items-center rounded-xl p-2 bg-gradient-to-b from-white/95 to-white/75 border border-[#648296]/16 shadow-[0_1px_3px_rgba(23,43,58,0.03),inset_0_1px_0_0_#ffffff]
+          ${collapsed ? 'justify-center' : 'justify-between gap-2.5'}
         `}>
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs shadow-md shadow-cyan-950/40 flex-shrink-0">
-              {user?.username?.substring(0, 2).toUpperCase() || 'MM'}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#168AAD]/15 text-[#168AAD] flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)]">
+              {displayName.charAt(0).toUpperCase()}
             </div>
             {!collapsed && (
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-white truncate">
-                  {user?.username || 'User'}
+                <p className="text-xs font-semibold text-[#172B3A] truncate">
+                  {displayName}
                 </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span className="text-[11px] text-slate-400 truncate">Free Plan</span>
-                </div>
+                <p className="text-[11px] text-[#718096] truncate">
+                  Account Active
+                </p>
               </div>
             )}
           </div>
@@ -202,7 +190,8 @@ export function Sidebar({
           <button
             onClick={logout}
             title="Log out"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors flex-shrink-0"
+            aria-label="Log out"
+            className="p-1.5 rounded-lg text-[#718096] hover:text-rose-600 hover:bg-rose-50 transition-colors flex-shrink-0 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -216,23 +205,21 @@ export function Sidebar({
       {/* Desktop Sidebar */}
       <aside
         className={`
-          hidden lg:block flex-shrink-0 transition-all duration-300 z-30
-          ${collapsed ? 'w-20' : 'w-64'}
+          hidden lg:flex flex-col h-screen flex-shrink-0 transition-all duration-200 z-30
+          ${collapsed ? 'w-18' : 'w-60'}
         `}
       >
-        <div className="h-screen sticky top-0">
-          {sidebarContent}
-        </div>
+        {sidebarContent}
       </aside>
 
       {/* Mobile Off-canvas Drawer */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div
-            className="fixed inset-0 bg-[#040810]/80 backdrop-blur-md transition-opacity duration-300"
+            className="fixed inset-0 bg-[#172B3A]/40 backdrop-blur-sm transition-opacity"
             onClick={onCloseMobile}
           />
-          <div className="relative w-72 max-w-[80vw] h-full shadow-2xl z-10 animate-in slide-in-from-left duration-300">
+          <div className="relative w-64 max-w-[80vw] h-full shadow-xl z-10 animate-in slide-in-from-left duration-200">
             {sidebarContent}
           </div>
         </div>
@@ -240,4 +227,3 @@ export function Sidebar({
     </>
   )
 }
-

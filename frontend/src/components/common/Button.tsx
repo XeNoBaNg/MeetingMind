@@ -27,28 +27,29 @@ export function Button({
 }: ButtonProps) {
   const variantStyles = {
     primary: `
-      bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 text-white font-semibold
-      hover:from-cyan-400 hover:via-sky-400 hover:to-blue-500
-      shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30
-      border border-cyan-400/30 active:scale-[0.98]
+      bg-gradient-to-b from-[#1898bd] via-[#168aad] to-[#137694] text-white font-medium
+      hover:from-[#199ec5] hover:to-[#126f8c] active:scale-[0.98]
+      shadow-[0_1px_2px_rgba(20,123,155,0.25),inset_0_1px_0_0_rgba(255,255,255,0.25)]
+      border border-[#147b9b]/80
     `,
     secondary: `
-      bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 hover:text-white font-medium
-      border border-white/10 hover:border-white/20
-      shadow-md shadow-black/20 active:scale-[0.98]
+      bg-gradient-to-b from-white via-white/95 to-slate-50/90 hover:to-slate-100/90 text-[#172B3A] font-medium
+      border border-[#648296]/24 hover:border-[#648296]/36
+      shadow-[0_1px_2px_rgba(23,43,58,0.03),inset_0_1px_0_0_#ffffff] active:scale-[0.98]
     `,
     danger: `
-      bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-rose-200 font-medium
-      border border-rose-500/30 hover:border-rose-500/50
-      shadow-md shadow-rose-950/20 active:scale-[0.98]
+      bg-gradient-to-b from-rose-50 to-rose-100/80 hover:to-rose-100 text-rose-700 font-medium
+      border border-rose-200 hover:border-rose-300
+      shadow-[0_1px_2px_rgba(244,63,94,0.06),inset_0_1px_0_0_rgba(255,255,255,0.8)]
+      active:scale-[0.98]
     `,
     ghost: `
-      bg-transparent hover:bg-white/[0.06] text-slate-300 hover:text-white font-medium
+      bg-transparent hover:bg-black/[0.04] text-[#5A6E7F] hover:text-[#172B3A] font-medium
       active:scale-[0.98]
     `,
     outline: `
-      bg-transparent hover:bg-cyan-500/10 text-cyan-300 hover:text-cyan-200 font-medium
-      border border-cyan-500/30 hover:border-cyan-500/50
+      bg-transparent hover:bg-[#168AAD]/8 text-[#168AAD] font-medium
+      border border-[#168AAD]/30 hover:border-[#168AAD]/60
       active:scale-[0.98]
     `
   }[variant]
@@ -63,8 +64,8 @@ export function Button({
     <button
       disabled={disabled || loading}
       className={`
-        inline-flex items-center justify-center transition-all duration-200 cursor-pointer
-        disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
+        inline-flex items-center justify-center transition-all duration-180 cursor-pointer
+        disabled:opacity-50 disabled:cursor-not-allowed select-none
         ${variantStyles}
         ${sizeStyles}
         ${className}
@@ -72,13 +73,16 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <Loader2 className="w-4 h-4 animate-spin text-current" />
+        <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
       ) : (
         Icon && iconPosition === 'left' && <Icon className="w-4 h-4 flex-shrink-0" />
       )}
+      
       <span>{children}</span>
-      {!loading && Icon && iconPosition === 'right' && <Icon className="w-4 h-4 flex-shrink-0" />}
+
+      {!loading && Icon && iconPosition === 'right' && (
+        <Icon className="w-4 h-4 flex-shrink-0" />
+      )}
     </button>
   )
 }
-
